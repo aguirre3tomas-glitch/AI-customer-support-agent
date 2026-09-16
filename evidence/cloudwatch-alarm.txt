@@ -1,0 +1,12 @@
+metric filter 'customer_support_agent_errors' on /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT
+alarm 'customer-support-agent-errors': >5 errors / 5 min -> ALARM
+{
+  "AlarmName": "customer-support-agent-errors",
+  "StateValue": "INSUFFICIENT_DATA",
+  "MetricName": "AgentRuntimeErrors",
+  "Threshold": 5.0,
+  "ComparisonOperator": "GreaterThanThreshold",
+  "Period": 300,
+  "Namespace": "CsaiAgent"
+}
+filters: ['customer_support_agent_errors']

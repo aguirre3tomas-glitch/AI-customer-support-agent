@@ -1,0 +1,26 @@
+### test5-loyalty-discount
+COMMAND: agentcore invoke '{"prompt": "I am a Gold member with 4250 points. Calculate my discount on a $150 standard order.", "customer_id": "CUST-123", "session_id": "t5"}'
+
+┌────────────────────────── customer_support_agent ───────────────────────────┐
+│ Session: d38fd588-d70a-449f-ab64-309a5afcc44c                               │
+│ Request ID: 277008a0-8820-4f43-9b3f-5889c34b2bc1                            │
+│ ARN:                                                                        │
+│ arn:aws:bedrock-agentcore:us-east-1:032189013563:runtime/customer_support_a │
+│ gent-hFhMtcHN2g                                                             │
+│ Logs: aws logs tail                                                         │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --follow                │
+│       aws logs tail                                                         │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --since 1h              │
+│ GenAI Dashboard:                                                            │
+│ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-obse │
+│ rvability/agent-core                                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Response:
+Your Gold membership discount on a $150 standard order is $51.00, bringing your
+final total to **$99.00**. You used 4,000 points ($40 value) and received an 
+additional $11 tier discount. You earned 150 new points and have 400 points 
+remaining.
+

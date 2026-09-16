@@ -1,0 +1,24 @@
+### Test 1 — Order Tracking
+COMMAND: agentcore invoke '{"prompt": "Can you track order ORD-001?", "customer_id": "CUST-123", "session_id": "t1"}'
+
+┌────────────────────────── customer_support_agent ───────────────────────────┐
+│ Session: d38fd588-d70a-449f-ab64-309a5afcc44c                               │
+│ Request ID: 8b61a479-1f76-4768-9dbf-079a1907442c                            │
+│ ARN:                                                                        │
+│ arn:aws:bedrock-agentcore:us-east-1:032189013563:runtime/customer_support_a │
+│ gent-hFhMtcHN2g                                                             │
+│ Logs: aws logs tail                                                         │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --follow                │
+│       aws logs tail                                                         │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --since 1h              │
+│ GenAI Dashboard:                                                            │
+│ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-obse │
+│ rvability/agent-core                                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Response:
+Your order ORD-001 has shipped via UPS with tracking number **TRK987654321** 
+and is expected to be delivered on **2026-09-18**. The order contains 1 × 
+Wireless Headphones Pro ($89.99).

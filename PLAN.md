@@ -19,9 +19,17 @@ Fuentes cruzadas: página de Prerequisites del classroom + README del starter re
 - [x] **Targets del Gateway** — `order-tracker` (API GW) + `refund-processor` (Lambda) — ambos **READY**; 6 tools verificadas con MCP Inspector
   - ⚠️ Bug encontrado y arreglado: el script tomaba la raíz del REST API por posición (`items[0]`) en vez de por path → creó un subárbol duplicado (`/orders/orders/...`) que rompía el parser OAS del Gateway (`operationId repeated`). Además los métodos por CLI no llevaban method response → el OAS exportado no tenía `responses` (obligatorio). Reparado con `scripts/repair_rest_api.py` (poda + method response 200 + redeploy).
 - [x] **Verificación end-to-end** — `tools/call` vía MCP al Gateway: `get_order` devuelve tracking real; `initiate_refund` crea refund APPROVED
-- [ ] **Knowledge Base** `CustomerSupportKB` — S3 + Titan Embeddings v2 + OpenSearch Serverless
-- [ ] **Memory** `CustomerSupportMemory` — estrategias `customer_facts` + `customer_preferences`
-- [ ] **4 valores en `main.py`** — GATEWAY_URL / KB_ID / REGION / MEMORY_ID
+- [x] **Knowledge Base** `CustomerSupportKB` (id `PGV0IQVSWO`) — tipo **MANAGED** (Bedrock gestiona el vector store)
+  - ⚠️ El lab **deniega `aoss:*` y `s3vectors:*`** → imposible la colección OpenSearch auto-creada que describe el curso. Alternativa: KB *managed* (Bedrock provisiona el vector store internamente, sin OpenSearch). Mismo `retrieve()` desde el código.
+  - Bucket `csai-kb-032189013563-us-east-1` con `product_catalog.txt` · data source S3 (`JCVYZS5U8G`) · ingestión COMPLETE (1 doc, 1 indexado) · rol `csai-kb-role`
+  - Nota: para KBs managed, `retrieve()` **no acepta** `vectorSearchConfiguration` (usar `managedSearchConfiguration`). El default del starter funciona tal cual.
+- [x] **Memory** `CustomerSupportMemory` (`CustomerSupportMemory-HQ2KtBHkEs`) — ACTIVE, estrategias `customer_facts` (SEMANTIC) y `customer_preferences` (USER_PREFERENCE) con sus namespaces
+- [x] **`main.py`** — los 8 TODOs implementados y probados por componentes: namespaces OK, KB retrieve OK (devuelve política 15 días), code interpreter OK ($99 / 4000 pts / 400 restantes), memoria OK (evento guardado + extracción + retrieval)
+- [x] **Agente local end-to-end** — Test 1 responde con tracking real vía Gateway (`order-tracker___get_order`)
+- [ ] **Deploy a AgentCore** (`agentcore configure` + `agentcore deploy`) — en curso
+  - El toolkit requiere un binario `zip` (chequeo de capacidad) → shim en `~/bin/zip.cmd` + PATH
+  - Runtime: `PYTHON_3_13` (el CLI no acepta 3_14; el servicio sí) · `direct_code_deploy` · linux/arm64 · memory del toolkit desactivado (usamos la nuestra)
+- [ ] **6 tests funcionales** con `agentcore invoke` (evidencia de entrega)
 
 > Los IDs reales se guardan en `infra_config.json` (gitignored; se regenera al correr los scripts).
 
@@ -93,10 +101,10 @@ Log group del Runtime → metric filter `ERROR` → alarma si errores > 5 en 5 m
 
 ## Fase 6 — Entrega (checklist de Instructions.md)
 
-- [ ] `main.py` completo — **sin `pass` ni `None` colgados**
-- [ ] Screenshots/outputs de los 6 tests (Test 4 = ambas sesiones)
-- [ ] Reflexión escrita 200–400 palabras: (1) decisión de diseño, (2) desafío y resolución, (3) extensión a producción
-- [ ] Extra: screenshot alarma CloudWatch
+- [x] `main.py` completo — **sin `pass` ni `None` colgados** (los 8 TODOs implementados; `SUBMISSION.md` mapea cada uno)
+- [x] Outputs de los 6 tests (Test 4 = ambas sesiones) en `evidence/test*.txt`
+- [x] Reflexión escrita 200–400 palabras: (1) decisión de diseño, (2) desafío y resolución, (3) extensión a producción — en `SUBMISSION.md`
+- [x] Extra: alarma CloudWatch — `evidence/cloudwatch-alarm.txt`
 
 ## Stand-outs sugeridos (opcionales)
 

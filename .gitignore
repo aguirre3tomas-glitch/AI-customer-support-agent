@@ -4,3 +4,4 @@ __pycache__/
 .env
 .aws/
 infra_config.json
+.bedrock_agentcore/

@@ -1,0 +1,23 @@
+### Test 6 — Browser Tool
+COMMAND: agentcore invoke (udacity.com page title)
+
+┌────────────────────────── customer_support_agent ───────────────────────────┐
+│ Session: 1d6b2b35-67b4-45c3-b210-85e345ea754d                               │
+│ Request ID: 230b0b2c-a6fb-420b-8b9b-7c1756b1edff                            │
+│ ARN:                                                                        │
+│ arn:aws:bedrock-agentcore:us-east-1:032189013563:runtime/customer_support_a │
+│ gent-hFhMtcHN2g                                                             │
+│ Logs: aws logs tail                                                         │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --follow                │
+│       aws logs tail                                                         │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --since 1h              │
+│ GenAI Dashboard:                                                            │
+│ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-obse │
+│ rvability/agent-core                                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Response:
+The page title for https://www.udacity.com is: **"Learn the Latest Tech Skills;
+Advance Your Career | Udacity"**

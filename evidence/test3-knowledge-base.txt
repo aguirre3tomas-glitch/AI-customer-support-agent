@@ -1,0 +1,26 @@
+### test3-knowledge-base
+COMMAND: agentcore invoke '{"prompt": "What are the benefits of the Platinum loyalty tier?", "customer_id": "CUST-123", "session_id": "t3"}'
+
+┌────────────────────────── customer_support_agent ───────────────────────────┐
+│ Session: d38fd588-d70a-449f-ab64-309a5afcc44c                               │
+│ Request ID: 2479e60c-cc27-4359-84c5-d83385bd9b53                            │
+│ ARN:                                                                        │
+│ arn:aws:bedrock-agentcore:us-east-1:032189013563:runtime/customer_support_a │
+│ gent-hFhMtcHN2g                                                             │
+│ Logs: aws logs tail                                                         │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --follow                │
+│       aws logs tail                                                         │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --since 1h              │
+│ GenAI Dashboard:                                                            │
+│ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-obse │
+│ rvability/agent-core                                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Response:
+The Platinum loyalty tier includes:
+- Free same-day shipping
+- 15% discount on purchases
+- Priority customer support
+

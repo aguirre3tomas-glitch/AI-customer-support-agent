@@ -1,0 +1,23 @@
+### test4b-memory-session-b
+COMMAND: agentcore invoke '{"prompt": "Do you remember my name and communication preference?", "customer_id": "CUST-123", "session_id": "s-B"}'
+
+┌────────────────────────── customer_support_agent ───────────────────────────┐
+│ Session: d38fd588-d70a-449f-ab64-309a5afcc44c                               │
+│ Request ID: 7344ecd7-ceb1-4699-9ecf-277fda32d602                            │
+│ ARN:                                                                        │
+│ arn:aws:bedrock-agentcore:us-east-1:032189013563:runtime/customer_support_a │
+│ gent-hFhMtcHN2g                                                             │
+│ Logs: aws logs tail                                                         │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --follow                │
+│       aws logs tail                                                         │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --since 1h              │
+│ GenAI Dashboard:                                                            │
+│ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-obse │
+│ rvability/agent-core                                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Response:
+Yes, Jane. I remember you prefer concise responses.
+
