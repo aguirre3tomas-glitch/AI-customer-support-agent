@@ -8,6 +8,7 @@ Fuentes cruzadas: página de Prerequisites del classroom + README del starter re
 - [x] Repo propio: `github.com/aguirre3tomas-glitch/AI-customer-support-agent` (espejo del starter en `starter/`)
 - [x] Entorno local: uv 0.12.5, venv Python 3.14.7, dependencias resueltas (`uv.lock` commiteado)
 - [x] Node.js 24 (para MCP Inspector)
+- [x] AWS CLI **v2.36.46** instalada (reemplaza la v1 que quedó en el venv del P1)
 - [ ] **Credenciales del nuevo lab** (Udacity → Cloud Resources) ← bloqueante para arrancar
 
 ## Fase 1 — Infraestructura AWS (todo en us-east-1)
@@ -83,7 +84,7 @@ Log group del Runtime → metric filter `ERROR` → alarma si errores > 5 en 5 m
 
 - **Modelo**: la página dice `amazon.nova-2-lite-v1:0`, el README dice `amazon.nova-lite-v1:0`, y el código usa `global.amazon.nova-2-lite-v1:0` → manda el código; verificar Model access en Bedrock igual.
 - **Python**: README pide 3.14+ (tenemos 3.14.7 ✓); la página decía 3.13+.
-- **AWS CLI**: piden v2; local tenemos v1.46 (suficiente por ahora; el trabajo lo hacen boto3 y el toolkit de AgentCore).
+- **AWS CLI**: piden v2 → **instalada v2.36.46** (la v1 del venv P1 quedó ahí inofensiva, no la usa nadie).
 - **Rutas**: el README referencia `solution/...` para `lambda_schema` y `product_catalog.txt`; en el starter están en `starter/` (los tenemos).
 - **RUBRIC.md**: mencionado en el README pero no vino en el clone público (estará en el classroom, como en el P1).
 
