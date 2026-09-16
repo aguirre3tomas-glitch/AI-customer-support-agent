@@ -1,7 +1,7 @@
 # Plan — Project 2: Customer Support AI Agent (cd14763)
 
-Fuentes cruzadas: página de Prerequisites del classroom + README del starter repo.
-Última revisión: 2026-09-15.
+Fuentes cruzadas: página de Prerequisites del classroom + README del starter repo + **Instructions.md** (nueva, define deploy/tests/cleanup/entrega).
+Última revisión: 2026-09-16.
 
 ## Estado actual
 
@@ -9,7 +9,7 @@ Fuentes cruzadas: página de Prerequisites del classroom + README del starter re
 - [x] Entorno local: uv 0.12.5, venv Python 3.14.7, dependencias resueltas (`uv.lock` commiteado)
 - [x] Node.js 24 (para MCP Inspector)
 - [x] AWS CLI **v2.36.46** instalada (reemplaza la v1 que quedó en el venv del P1)
-- [ ] **Credenciales del nuevo lab** (Udacity → Cloud Resources) ← bloqueante para arrancar
+- [ ] **Credenciales del lab** — pegadas pero AWS las rechaza (`InvalidClientTokenId`, cuenta 032189013563, región del token us-east-2) → **recopiar desde el lab activo** ← bloqueante
 
 ## Fase 1 — Infraestructura AWS (todo en us-east-1)
 
@@ -50,10 +50,13 @@ Fuentes cruzadas: página de Prerequisites del classroom + README del starter re
 | 7 | `calculate_loyalty_discount()` → código Python en Code Interpreter (`code_session`), fallback solo tier |
 | 8 | `invoke()` entrypoint: payload → MemoryHook + Browser + tools del Gateway (MCP) → Agent → respuesta |
 
+Tareas del curso: Task 1 (TODOs 1-3) · Task 2 (TODO 4) · Task 3 (TODO 5) · Task 4 (TODO 6) · Task 5 (TODO 7) · Task 6 (TODO 8) · Task 7 (deploy + tests) · Task 8 (reflexión).
+
 ## Fase 3 — Deploy a AgentCore
 
 ```bash
-agentcore configure     # primera vez
+# crea .bedrock_agentcore.yaml (dice qué archivo tiene el entrypoint y cómo nombrar los recursos)
+agentcore configure --entrypoint main.py --name customer-support-agent
 agentcore deploy
 agentcore invoke '{"prompt": "Hello", "customer_id": "CUST-123", "session_id": "test-1"}'
 ```
@@ -63,31 +66,47 @@ agentcore invoke '{"prompt": "Hello", "customer_id": "CUST-123", "session_id": "
 | # | Prompt | Esperado |
 |---|---|---|
 | 1 | track order ORD-001 | tracking TRK987654321, carrier UPS, entrega estimada |
-| 2 | refund ORD-002 (Kindle) | refund ID, APPROVED, 3-5 días |
+| 2 | refund ORD-002 (Kindle) | refund ID, APPROVED, "3-5 business days" |
 | 3 | beneficios Platinum | same-day shipping, 15% discount, priority support |
-| 4 | memoria: sesión A "I am Jane, prefer concise" → sesión B "remember my name?" | recuerda Jane + preferencia |
-| 5 | Gold 4250 pts, $150 | points redeemed, 10% tier, total final, points restantes |
-| 6 | browser: amazon.com title | título real de la página |
+| 4 | memoria: sesión A `"Hi, I am Jane. I prefer concise responses."` → **esperar ≥30s** → sesión B `"Do you remember my name and communication preference?"` | recuerda Jane + preferencia |
+| 5 | Gold 4250 pts, $150 standard | points redeemed, 10% tier, total final, points restantes |
+| 6 | browser: **udacity.com** title | título real de la página |
 
-## Fase 5 — CloudWatch
+## Fase 5 — CloudWatch (solo en README viejo)
 
-Log group del Runtime → metric filter `ERROR` → alarma si errores > 5 en 5 min → **screenshot de la alarma**.
+Log group del Runtime → metric filter `ERROR` → alarma si errores > 5 en 5 min → screenshot.
+> ⚠️ Instructions.md NO lo pide en la entrega: hacerlo como extra barato que cubre la versión vieja también.
 
-## Fase 6 — Entrega
+## Fase 6 — Entrega (checklist de Instructions.md)
 
-- [ ] `main.py` con los 8 TODOs completos
-- [ ] Screenshots/outputs de los 6 tests
-- [ ] Screenshot de la alarma CloudWatch
-- [ ] Reflexión escrita 200–400 palabras: 1 decisión de diseño / 1 desafío / extensión a producción
+- [ ] `main.py` completo — **sin `pass` ni `None` colgados**
+- [ ] Screenshots/outputs de los 6 tests (Test 4 = ambas sesiones)
+- [ ] Reflexión escrita 200–400 palabras: (1) decisión de diseño, (2) desafío y resolución, (3) extensión a producción
+- [ ] Extra: screenshot alarma CloudWatch
+
+## Stand-outs sugeridos (opcionales)
+
+- Validación de output estructurado con **Pydantic** (order status, discount breakdown)
+- **Summarización** de historial al exceder presupuesto de tokens
+- Personalizar el dominio manteniendo la arquitectura
 
 ## Discrepancias detectadas entre las fuentes
 
-- **Modelo**: la página dice `amazon.nova-2-lite-v1:0`, el README dice `amazon.nova-lite-v1:0`, y el código usa `global.amazon.nova-2-lite-v1:0` → manda el código; verificar Model access en Bedrock igual.
+- **Modelo**: página `amazon.nova-2-lite-v1:0` · README `amazon.nova-lite-v1:0` · código `global.amazon.nova-2-lite-v1:0` → **manda el código**; verificar Model access igual.
 - **Python**: README pide 3.14+ (tenemos 3.14.7 ✓); la página decía 3.13+.
-- **AWS CLI**: piden v2 → **instalada v2.36.46** (la v1 del venv P1 quedó ahí inofensiva, no la usa nadie).
-- **Rutas**: el README referencia `solution/...` para `lambda_schema` y `product_catalog.txt`; en el starter están en `starter/` (los tenemos).
+- **AWS CLI**: piden v2 → **instalada v2.36.46**.
+- **Test 6**: Instructions pide **udacity.com**; el expected quedó desactualizado ("live Amazon.com page").
+- **CloudWatch**: estaba en el checklist del README viejo, no en el nuevo de Instructions.
+- **Deploy**: el README decía `agentcore configure` a secas; Instructions especifica `--entrypoint main.py --name <nombre>` (genera `.bedrock_agentcore.yaml`).
+- **Rutas**: el README referencia `solution/...` para `lambda_schema` y `product_catalog.txt`; en el starter están en `starter/`.
 - **RUBRIC.md**: mencionado en el README pero no vino en el clone público (estará en el classroom, como en el P1).
 
 ## Costos / cleanup (al terminar)
 
-Estimado <$15. Borrar: Gateway, Knowledge Base, Memory, Lambdas, API Gateway, bucket S3 y el Runtime del agente.
+Estimado <$15. Pasos (según Instructions):
+1. `agentcore destroy` — borra el deployment del Runtime
+2. Consola Bedrock → AgentCore: borrar **Gateway** y **Memory**; Knowledge Bases: borrar la **KB**
+3. OpenSearch Serverless → colecciones: borrar la auto-creada · S3: vaciar y borrar el bucket
+4. API Gateway: borrar la REST API · Lambda: borrar ambas funciones
+5. (Opcional) IAM: borrar los roles autogenerados
+6. ⚠️ **Borrar las credenciales de `~/.aws` al final del proyecto — preguntar al usuario antes** (pedido explícito)
