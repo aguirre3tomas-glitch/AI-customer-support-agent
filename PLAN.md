@@ -9,7 +9,18 @@ Fuentes cruzadas: página de Prerequisites del classroom + README del starter re
 - [x] Entorno local: uv 0.12.5, venv Python 3.14.7, dependencias resueltas (`uv.lock` commiteado)
 - [x] Node.js 24 (para MCP Inspector)
 - [x] AWS CLI **v2.36.46** instalada (reemplaza la v1 que quedó en el venv del P1)
-- [ ] **Credenciales del lab** — pegadas pero AWS las rechaza (`InvalidClientTokenId`, cuenta 032189013563, región del token us-east-2) → **recopiar desde el lab activo** ← bloqueante
+- [x] **Credenciales del lab** — funcionan desde la máquina local (el token viejo era el problema; se transfirió el correcto desde la VM con `fold -w 76`). ⚠️ Al cerrarse la sesión, Vocareum revoca todo (`voc-cancel-cred`) → recopiar el trío al reiniciar el lab
+
+## Progreso Fase 1
+
+- [x] **Lambdas (2)** — `order-tracker` + `refund-processor` desplegadas (Python 3.12) y probadas: ORD-001 → `TRK987654321`/UPS; refund → `REF-…`/`APPROVED`. Rol de ejecución: `csai-lambda-basic-role` · Script: `scripts/deploy_lambdas.py`
+- [x] **REST API** — `customer-support-api` (id `wah32tfea3`), stage `prod`, 3 GET con operation names (`get_order`, `get_customer_orders`, `get_customer`) + integración proxy → `order-tracker` · Script: `scripts/setup_gateway_infra.py`
+- [x] **AgentCore Gateway** — `CustomerSupportGateway` (id `customersupportgateway-4grevewyco`) estado READY · authorizer NONE · rol `csai-gateway-role`
+- [ ] **Targets del Gateway** — `order-tracker` (API GW, 3 tools) + `refund-processor` (Lambda con `lambda_schema`) — payloads validados offline; falta ejecutar con credenciales frescas
+- [ ] **Knowledge Base** `CustomerSupportKB` — S3 + Titan Embeddings v2 + OpenSearch Serverless
+- [ ] **Memory** `CustomerSupportMemory` — estrategias `customer_facts` + `customer_preferences`
+
+> Los IDs reales se guardan en `infra_config.json` (gitignored; se regenera al correr los scripts).
 
 ## Fase 1 — Infraestructura AWS (todo en us-east-1)
 
