@@ -16,9 +16,12 @@ Fuentes cruzadas: página de Prerequisites del classroom + README del starter re
 - [x] **Lambdas (2)** — `order-tracker` + `refund-processor` desplegadas (Python 3.12) y probadas: ORD-001 → `TRK987654321`/UPS; refund → `REF-…`/`APPROVED`. Rol de ejecución: `csai-lambda-basic-role` · Script: `scripts/deploy_lambdas.py`
 - [x] **REST API** — `customer-support-api` (id `wah32tfea3`), stage `prod`, 3 GET con operation names (`get_order`, `get_customer_orders`, `get_customer`) + integración proxy → `order-tracker` · Script: `scripts/setup_gateway_infra.py`
 - [x] **AgentCore Gateway** — `CustomerSupportGateway` (id `customersupportgateway-4grevewyco`) estado READY · authorizer NONE · rol `csai-gateway-role`
-- [ ] **Targets del Gateway** — `order-tracker` (API GW, 3 tools) + `refund-processor` (Lambda con `lambda_schema`) — payloads validados offline; falta ejecutar con credenciales frescas
+- [x] **Targets del Gateway** — `order-tracker` (API GW) + `refund-processor` (Lambda) — ambos **READY**; 6 tools verificadas con MCP Inspector
+  - ⚠️ Bug encontrado y arreglado: el script tomaba la raíz del REST API por posición (`items[0]`) en vez de por path → creó un subárbol duplicado (`/orders/orders/...`) que rompía el parser OAS del Gateway (`operationId repeated`). Además los métodos por CLI no llevaban method response → el OAS exportado no tenía `responses` (obligatorio). Reparado con `scripts/repair_rest_api.py` (poda + method response 200 + redeploy).
+- [x] **Verificación end-to-end** — `tools/call` vía MCP al Gateway: `get_order` devuelve tracking real; `initiate_refund` crea refund APPROVED
 - [ ] **Knowledge Base** `CustomerSupportKB` — S3 + Titan Embeddings v2 + OpenSearch Serverless
 - [ ] **Memory** `CustomerSupportMemory` — estrategias `customer_facts` + `customer_preferences`
+- [ ] **4 valores en `main.py`** — GATEWAY_URL / KB_ID / REGION / MEMORY_ID
 
 > Los IDs reales se guardan en `infra_config.json` (gitignored; se regenera al correr los scripts).
 

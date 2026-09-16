@@ -92,7 +92,10 @@ def ensure_get_method(api_id: str, resource_id: str, resource_path: str, op_name
 # ── 1. REST API ───────────────────────────────────────────────────────────────
 print("== API Gateway ==")
 api_id = find_or_create_rest_api()
-root_id = apigw.get_resources(restApiId=api_id)["items"][0]["id"]
+# the resource list is NOT ordered with the root first — find it by path
+root_id = next(
+    r["id"] for r in apigw.get_resources(restApiId=api_id)["items"] if r["path"] == "/"
+)
 
 orders_id = ensure_resource(api_id, root_id, "orders")
 order_id_res = ensure_resource(api_id, orders_id, "{order_id}")
@@ -257,6 +260,9 @@ if "refund-processor" not in existing:
                 }
             }
         },
+        credentialProviderConfigurations=[
+            {"credentialProviderType": "GATEWAY_IAM_ROLE"}
+        ],
     )
     print("target refund-processor: created")
 else:
