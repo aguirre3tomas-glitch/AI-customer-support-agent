@@ -80,10 +80,11 @@ def _ensure_playwright_driver() -> None:
             probe = subprocess.run(
                 [str(driver), "--version"], capture_output=True, timeout=20,
             )
-            if probe.returncode == 0:
-                return  # the bundled driver already runs
+            runs = probe.returncode == 0
         except Exception:  # noqa: BLE001 — not executable here; copy it below
-            pass
+            runs = False
+        if runs:
+            return  # the bundled driver already runs
 
         target = Path("/tmp/playwright-node")
         if not target.exists():
@@ -148,10 +149,10 @@ def _memory_text(record: Dict) -> str:
     # strategies store structured JSON — flatten it into readable lines
     try:
         data = json.loads(text)
-        if isinstance(data, dict):
-            return "; ".join(f"{k}: {v}" for k, v in data.items())
     except (TypeError, ValueError):
-        pass
+        return text
+    if isinstance(data, dict):
+        return "; ".join(f"{k}: {v}" for k, v in data.items())
     return text
 
 
