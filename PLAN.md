@@ -106,6 +106,14 @@ Log group del Runtime → metric filter `ERROR` → alarma si errores > 5 en 5 m
 - [x] Reflexión escrita 200–400 palabras: (1) decisión de diseño, (2) desafío y resolución, (3) extensión a producción — en `SUBMISSION.md`
 - [x] Extra: alarma CloudWatch — `evidence/cloudwatch-alarm.txt`
 
+## Correcciones post-revisión (3 hallazgos Required)
+
+Tres observaciones del evaluador que la primera entrega no cubría. Reproducidas, corregidas y cubiertas por una suite local (`scripts/test_required_fixes.py`, 60 checks, output en `evidence/test-required-fixes.txt`). **Sin re-deploy**: el lab estaba muerto, así que la verificación es local y determinista (aritmética + hooks + falla controlada del Gateway). Test 5 sigue válido: con 4250 pts y $150 el tope no aplica, los números no cambian.
+
+1. **Errores del Gateway no se surfaceaban** → `_attach_gateway_tools()` degrada la turn (sigue con las tools locales) en vez de tumbar la request; `GatewayErrorHook` (hooks `BeforeToolCallEvent` / `AfterToolCallEvent`) cancela las llamadas de order/refund con un mensaje que nombra la operación, y reemplaza el error crudo de las que sí llegaron. `_describe_failure()` clasifica el fallo en un motivo en lenguaje llano y `_failure_text()` recorre la cadena completa de excepciones (el `MCPClientInitializationError` envuelve un `ExceptionGroup` cuyo hijo sí dice la causa — con `str()` del nivel 0 no alcanza). El `except` final del entrypoint ya no filtra la excepción al cliente.
+2. **Flooring de redención mal aplicado** → el tope del 50% se aplicaba *después* del floor a bloques de 500 y podía quedar fuera de bloque ($45 → 2250 pts = $22.50, dentro del tope pero redención inválida). Ahora el tope se calcula en centavos enteros y **también** se floorea a bloque: 2000 pts ($20). Cubierto con casos justo debajo, en y justo arriba del límite de 500, más órdenes donde el tope manda.
+3. **Faltaban campos del contrato** → `tier_discount_pct` no existía en ninguna ruta y el fallback no devolvía `points_redeemed` ni `remaining_points`. El fallback ahora sale de `_fallback_breakdown()`, que devuelve **el mismo set de claves** que el sandbox: `points_redeemed` (int), `tier_discount_pct` (float, en forma de porcentaje) y `remaining_points` (int) siempre presentes y numéricos.
+
 ## Stand-outs sugeridos (opcionales)
 
 - Validación de output estructurado con **Pydantic** (order status, discount breakdown)

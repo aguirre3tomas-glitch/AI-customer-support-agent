@@ -30,6 +30,7 @@ import os, asyncio, sys, boto3
 from strands.hooks import (
     HookProvider, AfterInvocationEvent, HookRegistry, MessageAddedEvent,
 )
+from strands.hooks.events import AfterToolCallEvent, BeforeToolCallEvent
 import logging
 import uuid
 from typing import Dict
@@ -301,15 +302,25 @@ earn_rates = {"standard": 1, "device": 2, "fresh": 5}
 tier_rates = {"Silver": 0.00, "Gold": 0.10, "Platinum": 0.15}
 
 POINT_VALUE = 0.01          # 100 points = $1
-REDEMPTION_STEP = 500       # points redeem in blocks of 500
-MAX_REDEEM_SHARE = 0.5      # points can cover at most half the order
+POINT_VALUE_CENTS = 1       # ... which is one cent per point
+REDEMPTION_STEP = 500       # points redeem in blocks of 500 (and 500 is the minimum)
+MAX_REDEEM_SHARE = 0.5      # points can cover at most half of the order
 
 tier_rate = tier_rates.get(tier, 0.0)
 earn_rate = earn_rates.get(product_category, 1)
 
-redeemable = (loyalty_points // REDEMPTION_STEP) * REDEMPTION_STEP
-max_by_cap = int((order_total * MAX_REDEEM_SHARE) / POINT_VALUE)
-points_redeemed = min(redeemable, max_by_cap)
+# Redemption rules, applied in this order:
+#   1. a balance only redeems in whole 500-point blocks, so it is floored to the
+#      block below it first (499 points redeem nothing, 999 redeem 500);
+#   2. the redeemed value can never exceed half of the order total;
+#   3. the cap itself is floored to a block as well — without this second floor a
+#      $45 order would allow 2250 points ($22.50), which is inside the cap but is
+#      not a valid block, so only 2000 points ($20.00) may be redeemed.
+balance_blocks = (int(loyalty_points) // REDEMPTION_STEP) * REDEMPTION_STEP
+order_cents = int(round(order_total * 100))
+cap_points = int((order_cents * MAX_REDEEM_SHARE) // POINT_VALUE_CENTS)
+points_redeemed = min(balance_blocks, cap_points)
+points_redeemed = (points_redeemed // REDEMPTION_STEP) * REDEMPTION_STEP
 points_discount = round(points_redeemed * POINT_VALUE, 2)
 
 subtotal = round(order_total - points_discount, 2)
@@ -324,6 +335,7 @@ print(json.dumps({
     "loyalty_points": loyalty_points,
     "tier": tier,
     "tier_rate": tier_rate,
+    "tier_discount_pct": round(tier_rate * 100, 2),
     "order_total": order_total,
     "product_category": product_category,
     "points_redeemed": points_redeemed,
@@ -335,6 +347,47 @@ print(json.dumps({
     "remaining_points": remaining_points,
 }))
 """
+
+
+TIER_RATES = {"Silver": 0.00, "Gold": 0.10, "Platinum": 0.15}
+EARN_RATES = {"standard": 1, "device": 2, "fresh": 5}
+
+
+def _fallback_breakdown(
+    loyalty_points: int, tier: str, order_total: float, product_category: str,
+) -> dict:
+    """Tier-discount-only result, shaped exactly like the sandbox result.
+
+    Result contract: the sandbox path and this fallback path return the same
+    keys with the same meaning, so a caller never has to check which path ran.
+    ``points_redeemed``, ``tier_discount_pct`` and ``remaining_points`` are
+    always present and always numeric.
+
+    Points are deliberately not redeemed here — without the sandbox there is no
+    exact arithmetic to back the redemption rules, so the balance is reported
+    unchanged (plus the points this order earns).
+    """
+    tier_rate = TIER_RATES.get(tier, 0.0)
+    earn_rate = EARN_RATES.get(product_category, 1)
+    points_balance = int(loyalty_points)
+    tier_discount = round(order_total * tier_rate, 2)
+    points_earned = int(order_total * earn_rate)
+    return {
+        "loyalty_points": points_balance,
+        "tier": tier,
+        "tier_rate": tier_rate,
+        "tier_discount_pct": round(tier_rate * 100, 2),
+        "order_total": order_total,
+        "product_category": product_category,
+        "points_redeemed": 0,
+        "points_discount": 0.0,
+        "tier_discount": tier_discount,
+        "total_savings": tier_discount,
+        "final_total": round(order_total - tier_discount, 2),
+        "points_earned": points_earned,
+        "remaining_points": points_balance + points_earned,
+        "note": "Code Interpreter unavailable — tier discount only, points not redeemed.",
+    }
 
 
 @tool
@@ -385,18 +438,159 @@ def calculate_loyalty_discount(
             return "Code Interpreter returned no output."
     except Exception as exc:  # noqa: BLE001 — fall back to a plain calculation
         logger.error("code interpreter unavailable (%s); using fallback", exc)
-        tier_rate = {"Silver": 0.00, "Gold": 0.10, "Platinum": 0.15}.get(tier, 0.0)
-        tier_discount = round(order_total * tier_rate, 2)
-        return json.dumps({
-            "loyalty_points": loyalty_points,
-            "tier": tier,
-            "tier_rate": tier_rate,
-            "order_total": order_total,
-            "product_category": product_category,
-            "tier_discount": tier_discount,
-            "final_total": round(order_total - tier_discount, 2),
-            "note": "Code Interpreter unavailable — tier discount only.",
-        })
+        return json.dumps(
+            _fallback_breakdown(loyalty_points, tier, order_total, product_category)
+        )
+
+
+# ── Gateway error handling ───────────────────────────────────────────────────
+# The Gateway is the only remote dependency behind the agent's tools, and it can
+# fail in two different ways: the MCP connection may be unreachable when the turn
+# starts, or a call may reach it and fail (Lambda timeout, throttling, dropped
+# connection). Neither case should reach the customer as silence, as a raw stack
+# trace, or — worst of all — as invented order details.
+
+SUPPORT_LINE = "1-800-555-0199"
+GATEWAY_TOOL_PREFIXES = ("order-tracker___", "refund-processor___")
+GATEWAY_OPERATIONS = {
+    "order-tracker___get_order": "the order lookup",
+    "order-tracker___get_customer_orders": "the customer order list",
+    "order-tracker___get_customer": "the customer profile lookup",
+    "refund-processor___initiate_refund": "the refund request",
+    "refund-processor___check_refund_status": "the refund status check",
+    "refund-processor___get_return_label": "the return label",
+}
+
+
+def _is_gateway_tool(name: str) -> bool:
+    """True for the tools served by the Gateway (order tracking and refunds)."""
+    return any(str(name).startswith(prefix) for prefix in GATEWAY_TOOL_PREFIXES)
+
+
+def _failure_text(error: object, _depth: int = 0) -> str:
+    """Every message in an exception tree, flattened into one string.
+
+    A connection failure reaches us wrapped: an MCPClientInitializationError
+    whose cause is an ExceptionGroup whose own child is the ConnectError that
+    actually says what happened. The top-level message mentions none of it, so
+    ``__cause__``, ``__context__`` and ExceptionGroup children are all walked
+    (with a depth guard, since exception chains can be cyclic).
+
+    The result is only ever used to classify the failure — never shown to a
+    customer.
+    """
+    if _depth > 6:
+        return ""
+    parts = [str(error)]
+    nested: list = list(getattr(error, "exceptions", None) or [])
+    cause = getattr(error, "__cause__", None)
+    context = getattr(error, "__context__", None)
+    if cause is not None:
+        nested.append(cause)
+    if context is not None and context is not cause:
+        nested.append(context)
+    for inner in nested:
+        parts.append(_failure_text(inner, _depth + 1))
+    return " | ".join(p for p in parts if p)
+
+
+def _describe_failure(error: object) -> str:
+    """Short, safe description of a failure — never the raw error text.
+
+    A raw exception can carry URLs, request ids or other internals, so failures
+    are classified into a handful of plain-language reasons instead of being
+    passed through.
+    """
+    text = _failure_text(error).lower()
+    if "timeout" in text or "timed out" in text:
+        return "the request timed out"
+    if "throttl" in text or "rate exceeded" in text:
+        return "the service is throttling requests"
+    if "connection" in text or "connect" in text or "network" in text:
+        return "the connection to the service failed"
+    if "not found" in text or "no such" in text:
+        return "the requested record was not found"
+    return "the service returned an error"
+
+
+def _gateway_failure_message(tool_name: str, reason: str) -> str:
+    """One message for every Gateway failure: what failed and what to do next.
+
+    This is the text the model receives, so it also states the rule for the
+    reply: acknowledge the failure, offer a next step, never invent the data.
+    """
+    operation = GATEWAY_OPERATIONS.get(tool_name, "the requested operation")
+    return (
+        f"Gateway failure: {operation} could not be completed — {reason}. "
+        f"No order or refund data is available for this request and nothing was "
+        f"changed. Tell the customer plainly that {operation} is unavailable right "
+        f"now, do not invent order, refund or tracking details, and offer to retry "
+        f"in a moment or to call support on {SUPPORT_LINE}."
+    )
+
+
+class GatewayErrorHook(HookProvider):
+    """Turns Gateway failures into clear messages instead of crashes or silence.
+
+    Both failure modes are covered:
+      * the Gateway was unreachable when the turn started, so no tools were
+        loaded — order and refund calls are cancelled before they are attempted,
+        with the reason attached, so the model can explain what is unavailable;
+      * a call reached the Gateway and failed — the raw error result is replaced
+        by the same kind of message, keeping internals away from the customer.
+    """
+
+    def __init__(self, gateway_available: bool = True, reason: str | None = None) -> None:
+        self.gateway_available = gateway_available
+        self.reason = reason or "the service did not respond"
+
+    def register_hooks(self, registry: HookRegistry, **kwargs) -> None:
+        registry.add_callback(BeforeToolCallEvent, self._on_before_tool_call)
+        registry.add_callback(AfterToolCallEvent, self._on_after_tool_call)
+
+    def _on_before_tool_call(self, event: BeforeToolCallEvent) -> None:
+        tool_name = (event.tool_use or {}).get("name", "")
+        if self.gateway_available or not _is_gateway_tool(tool_name):
+            return
+        # The call would fail anyway: cancel it with a message the model can use.
+        event.cancel_tool = _gateway_failure_message(tool_name, self.reason)
+
+    def _on_after_tool_call(self, event: AfterToolCallEvent) -> None:
+        tool_name = (event.tool_use or {}).get("name", "")
+        if not _is_gateway_tool(tool_name):
+            return
+        result = event.result or {}
+        failed = event.exception is not None or result.get("status") == "error"
+        if not failed:
+            return
+        reason = _describe_failure(event.exception or result)
+        event.result = {
+            "toolUseId": result.get("toolUseId", ""),
+            "status": "error",
+            "content": [{"text": _gateway_failure_message(tool_name, reason)}],
+        }
+
+
+def _attach_gateway_tools(tools: list, startup_timeout: int = 30):
+    """Start the Gateway connection and append its MCP tools to ``tools``.
+
+    Returns ``(client, problem)``. ``problem`` is None when the tools loaded, or
+    a short description when the Gateway could not be reached — in which case the
+    turn continues without them: policy answers, discount math and the browser
+    still work, and order or refund questions get an honest answer instead of
+    taking the whole request down.
+    """
+    client = MCPClient(
+        lambda: streamable_http_client(GATEWAY_URL), startup_timeout=startup_timeout,
+    )
+    try:
+        client.start()
+        tools.extend(client.list_tools_sync())
+        return client, None
+    except Exception as exc:  # noqa: BLE001 — one remote dependency must not kill the turn
+        logger.error("gateway tools unavailable: %s", exc)
+        client.stop(None, None, None)  # start() can fail with the session half-open
+        return None, _describe_failure(exc)
 
 
 # ── TODO 8 — Agent Entrypoint ─────────────────────────────────────────────────
@@ -452,6 +646,10 @@ async def invoke(payload, context=None):
       prompt      (str, required) — the customer's message
       customer_id (str, optional) — unique customer identifier
       session_id  (str, optional) — session identifier; generated if absent
+
+    The turn never fails silently. A Gateway problem degrades only the order and
+    refund tools and tells the customer what could not be done; anything else
+    unexpected returns a plain message with a next step instead of a stack trace.
     """
     try:
         user_input = payload.get("prompt")
@@ -462,26 +660,35 @@ async def invoke(payload, context=None):
         browser = AgentCoreBrowser(region=REGION)
 
         tools = [search_knowledge_base, calculate_loyalty_discount, browser.browser]
+        mcp_client, gateway_problem = _attach_gateway_tools(tools)
+        if gateway_problem:
+            logger.warning("continuing without gateway tools (%s)", gateway_problem)
 
-        mcp_client = MCPClient(lambda: streamable_http_client(GATEWAY_URL))
-        with mcp_client:
-            tools.extend(mcp_client.list_tools_sync())
-
+        try:
             agent = Agent(
                 model=model,
                 tools=tools,
-                hooks=[memory_hook],
+                hooks=[
+                    memory_hook,
+                    GatewayErrorHook(gateway_problem is None, gateway_problem),
+                ],
                 system_prompt=system_prompt,
             )
             result = agent(user_input)
+        finally:
+            if mcp_client is not None:
+                mcp_client.stop(None, None, None)
 
         return result.message["content"][0]["text"]
 
     except Exception as exc:  # noqa: BLE001 — never drop a customer request
+        # Full detail goes to the logs; the customer gets a message they can act
+        # on. The raw error is kept out of the reply: it can carry request ids,
+        # URLs and other internals.
         logger.error("invoke failed: %s", exc)
         return (
-            "Sorry, I could not complete that request right now. "
-            f"Please try again, or call support at 1-800-555-0199. ({exc})"
+            "Sorry, I could not complete that request — something went wrong on our "
+            f"side. Please try again in a moment, or call support on {SUPPORT_LINE}."
         )
 
 

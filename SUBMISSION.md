@@ -16,6 +16,7 @@ was verified, and where the evidence lives.
 | Test 6 — Browser Tool | `evidence/test6-browser.txt` |
 | Written reflection | this file, below |
 | CloudWatch alarm on runtime errors (extra) | `evidence/cloudwatch-alarm.txt` |
+| Regression suite for the three review findings | `evidence/test-required-fixes.txt` (60/60 checks) |
 
 Every test ran against the deployed Runtime (`agentcore invoke`), not a local
 harness, and the raw command output is stored next to this file.
@@ -40,6 +41,53 @@ harness, and the raw command output is stored next to this file.
 - Runtime deploys as `direct_code_deploy` on Python 3.13 (the toolkit CLI caps
   below 3.14), linux/arm64, from the frozen `starter/requirements.txt`.
 - Deep-dive log of every infrastructure step, bug and fix: `PLAN.md`.
+
+## Review findings and corrections
+
+Three issues were raised in review. All three were reproduced, fixed and covered
+by a regression suite that runs locally (`scripts/test_required_fixes.py`, output
+in `evidence/test-required-fixes.txt`, 60 checks).
+
+**1. Gateway failures were not surfaced clearly.** The order and refund tools are
+the agent's only remote dependency, and the original code let a Gateway problem
+either escape as a generic message containing the raw exception text, or fail the
+turn entirely. Two failure modes are now handled at the Gateway boundary:
+
+- *Unreachable Gateway.* `_attach_gateway_tools()` starts the MCP connection and
+  loads the tools; if that fails, the turn continues with the local tools (policy
+  questions, discount math, browser) and the failure reason is passed to a hook.
+  A `GatewayErrorHook` cancels any order or refund call before it is attempted
+  and hands the model a message naming the failed operation and the next step.
+- *Call reached the Gateway and failed* (timeout, throttling, dropped connection,
+  Lambda error). The `AfterToolCallEvent` hook replaces the raw error result with
+  the same kind of message, so no internals reach the customer.
+
+Raw exception text is never forwarded: `_describe_failure()` classifies the error
+into a plain reason ("the request timed out", "the connection to the service
+failed", …) and `_failure_text()` walks the whole exception chain — including the
+`ExceptionGroup` wrapper the MCP client raises — because the outer message alone
+says nothing about the cause. The final catch-all reply in `invoke()` no longer
+embeds the exception either.
+
+**2. Points redemption boundaries were wrong.** Redemption floors the balance to
+500-point blocks and caps the redeemed value at half the order, but the cap was
+applied *after* the floor, so the result could land off a block: a $45 order
+allowed 2250 points ($22.50) — inside the cap, yet not a valid redemption. The
+cap is now computed in integer cents and floored to a block as well, so both
+rules hold at once. Boundaries are tested just below, at and above a 500-point
+boundary, plus orders where the cap binds.
+
+**3. The result did not expose every required field.** `tier_discount_pct` was
+missing from both paths, and the fallback returned neither `points_redeemed` nor
+`remaining_points`. The fallback now builds its result through
+`_fallback_breakdown()`, which returns the same key set as the sandbox path —
+`points_redeemed` (int), `tier_discount_pct` (float, percentage form) and
+`remaining_points` (int) are always present and always numeric. The regression
+suite asserts both paths for the same keys and types.
+
+The previously captured Test 5 output remains valid: for 4250 points on a $150
+order the cap never binds, so the figures ($40 points, $11 tier, $99 total, 400
+remaining) are identical before and after the change.
 
 ## Reflection
 

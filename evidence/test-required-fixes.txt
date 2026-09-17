@@ -1,0 +1,153 @@
+ERROR:strands.tools.mcp.mcp_client:client failed to initialize
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\strands\tools\mcp\mcp_client.py", line 462, in start
+  |     self._init_future.result(timeout=self._startup_timeout)
+  |     ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "C:\Users\Papa\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 454, in result
+  |     return self.__get_result()
+  |            ~~~~~~~~~~~~~~~~~^^
+  |   File "C:\Users\Papa\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 396, in __get_result
+  |     raise self._exception
+  |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\strands\tools\mcp\mcp_client.py", line 1471, in _async_background_thread
+  |     async with self._transport_callable() as (read_stream, write_stream, *_):
+  |                ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "C:\Users\Papa\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\mcp\client\streamable_http.py", line 688, in streamable_http_client
+  |     anyio.create_task_group() as tg,
+  |     ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpx2\_transports\default.py", line 98, in map_httpcore_exceptions
+    |     yield
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpx2\_transports\default.py", line 388, in handle_async_request
+    |     resp = await self._pool.handle_async_request(req)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpcore2\_async\connection_pool.py", line 242, in handle_async_request
+    |     raise exc from None
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpcore2\_async\connection_pool.py", line 224, in handle_async_request
+    |     response = await connection.handle_async_request(pool_request.request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpcore2\_async\connection.py", line 94, in handle_async_request
+    |     raise exc
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpcore2\_async\connection.py", line 74, in handle_async_request
+    |     stream = await self._connect(request)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpcore2\_async\connection.py", line 117, in _connect
+    |     stream = await self._network_backend.connect_tcp(**kwargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpcore2\_backends\auto.py", line 31, in connect_tcp
+    |     return await self._backend.connect_tcp(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     ...<5 lines>...
+    |     )
+    |     ^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpcore2\_backends\anyio.py", line 115, in connect_tcp
+    |     with map_exceptions(exc_map):
+    |          ~~~~~~~~~~~~~~^^^^^^^^^
+    |   File "C:\Users\Papa\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\contextlib.py", line 162, in __exit__
+    |     self.gen.throw(value)
+    |     ~~~~~~~~~~~~~~^^^^^^^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpcore2\_exceptions.py", line 17, in map_exceptions
+    |     raise to_exc(exc) from exc
+    | httpcore2.ConnectError: All connection attempts failed
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\anyio\_core\_tasks.py", line 327, in _run_coro
+    |     retval = await self._coro
+    |              ^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\mcp\client\streamable_http.py", line 308, in _run_request_post
+    |     await post_fn()
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\mcp\client\streamable_http.py", line 589, in handle_request_async
+    |     await self._handle_post_request(ctx)
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\mcp\client\streamable_http.py", line 323, in _handle_post_request
+    |     async with ctx.client.stream(
+    |                ~~~~~~~~~~~~~~~~~^
+    |         "POST",
+    |         ^^^^^^^
+    |     ...<2 lines>...
+    |         headers=headers,
+    |         ^^^^^^^^^^^^^^^^
+    |     ) as response:
+    |     ^
+    |   File "C:\Users\Papa\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\contextlib.py", line 214, in __aenter__
+    |     return await anext(self.gen)
+    |            ^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpx2\_client.py", line 1678, in stream
+    |     response = await self.send(
+    |                ^^^^^^^^^^^^^^^^
+    |     ...<4 lines>...
+    |     )
+    |     ^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpx2\_client.py", line 1818, in send
+    |     response = await self._send_handling_auth(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     ...<4 lines>...
+    |     )
+    |     ^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpx2\_client.py", line 1846, in _send_handling_auth
+    |     response = await self._send_handling_redirects(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     ...<3 lines>...
+    |     )
+    |     ^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpx2\_client.py", line 1881, in _send_handling_redirects
+    |     response = await self._send_single_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpx2\_client.py", line 1915, in _send_single_request
+    |     response = await transport.handle_async_request(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpx2\_transports\default.py", line 387, in handle_async_request
+    |     with map_httpcore_exceptions():
+    |          ~~~~~~~~~~~~~~~~~~~~~~~^^
+    |   File "C:\Users\Papa\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\contextlib.py", line 162, in __exit__
+    |     self.gen.throw(value)
+    |     ~~~~~~~~~~~~~~^^^^^^^
+    |   File "C:\Users\Papa\aws-agent-course\AI-customer-support-agent\starter\.venv\Lib\site-packages\httpx2\_transports\default.py", line 115, in map_httpcore_exceptions
+    |     raise mapped_exc(message) from exc
+    | httpx2.ConnectError: All connection attempts failed
+    +------------------------------------
+C:\Users\Papa\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\asyncio\base_events.py:745: RuntimeWarning: coroutine 'MCPClient.stop.<locals>._set_close_event' was never awaited
+  self._ready.clear()
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+ERROR:CSAI_Agent:gateway tools unavailable: the client initialization failed: unhandled errors in a TaskGroup (1 sub-exception)
+==============================================================================
+1. LOYALTY REDEMPTION RULES — 500-point blocks and the 50% cap
+==============================================================================
+ points    order    tier |  redeemed  discount  50% cap | remaining
+    499   150.00    Gold |         0      0.00    75.00 |       649
+    500   150.00    Gold |       500      5.00    75.00 |       150
+    501   150.00    Gold |       500      5.00    75.00 |       151
+    999   150.00    Gold |       500      5.00    75.00 |       649
+   1000   150.00    Gold |      1000     10.00    75.00 |       150
+   4250   150.00    Gold |      4000     40.00    75.00 |       400
+   5000    45.00    Gold |      2000     20.00    22.50 |      3045
+   5000   100.00    Gold |      5000     50.00    50.00 |       100
+   5000    10.00    Gold |       500      5.00     5.00 |      4510
+   5000     9.99    Gold |         0      0.00     5.00 |      5009
+
+==============================================================================
+2. RESULT CONTRACT — required fields in both paths
+==============================================================================
+  sandbox   keys=['final_total', 'loyalty_points', 'order_total', 'points_discount', 'points_earned', 'points_redeemed', 'product_category', 'remaining_points', 'tier', 'tier_discount', 'tier_discount_pct', 'tier_rate', 'total_savings']
+  sandbox   types={'points_redeemed': 'int', 'tier_discount_pct': 'float', 'remaining_points': 'int'}
+  fallback  keys=['final_total', 'loyalty_points', 'note', 'order_total', 'points_discount', 'points_earned', 'points_redeemed', 'product_category', 'remaining_points', 'tier', 'tier_discount', 'tier_discount_pct', 'tier_rate', 'total_savings']
+  fallback  types={'points_redeemed': 'int', 'tier_discount_pct': 'float', 'remaining_points': 'int'}
+
+==============================================================================
+3. GATEWAY FAILURE — controlled failure, clear message, no internals
+==============================================================================
+  unreachable Gateway -> problem='the connection to the service failed' tools=0 raised=None (2.1s)
+  cancelled call -> 'Gateway failure: the order lookup could not be completed — the connection to the service failed. No order or refund data is available for this request and nothing was changed. Tell the customer plainly that the order lookup is unavailable right now, do not invent order, refund or tracking details, and offer to retry in a moment or to call support on 1-800-555-0199.'
+  rewritten result -> 'Gateway failure: the refund request could not be completed — the service returned an error. No order or refund data is available for this request and nothing was changed. Tell the customer plainly that the refund request is unavailable right now, do not invent order, refund or tracking details, and offer to retry in a moment or to call support on 1-800-555-0199.'
+
+==============================================================================
+SUMMARY: 60/60 checks passed
+All required fixes verified.
