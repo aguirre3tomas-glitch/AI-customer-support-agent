@@ -16,7 +16,7 @@ was verified, and where the evidence lives.
 | Test 6 — Browser Tool | `evidence/test6-browser.txt` |
 | Written reflection | this file, below |
 | CloudWatch alarm on runtime errors (extra) | `evidence/cloudwatch-alarm.txt` |
-| Regression suite for the three review findings | `evidence/test-required-fixes.txt` (60/60 checks) |
+| Regression suite for the three review findings | `evidence/test-required-fixes.txt` (69/69 checks) |
 | Tool invocations behind the captured outputs (annotation) | `evidence/tool-invocations-annotated.txt` |
 
 Every test ran against the deployed Runtime (`agentcore invoke`), not a local
@@ -47,7 +47,9 @@ harness, and the raw command output is stored next to this file.
 
 Three issues were raised in review. All three were reproduced, fixed and covered
 by a regression suite that runs locally (`scripts/test_required_fixes.py`, output
-in `evidence/test-required-fixes.txt`, 60 checks).
+in `evidence/test-required-fixes.txt`, 69 checks). The suite includes a whole
+agent turn driven by a stub model — no AWS calls — in which a Gateway tool fails:
+the turn still completes and the agent answers the customer.
 
 **1. Gateway failures were not surfaced clearly.** The order and refund tools are
 the agent's only remote dependency, and the original code let a Gateway problem

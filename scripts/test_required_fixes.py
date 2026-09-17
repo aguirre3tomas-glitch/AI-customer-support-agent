@@ -264,6 +264,99 @@ try:
 except Exception as exc:  # pragma: no cover
     check("agent assembles with the degradation hook", False, repr(exc))
 
+# ── 4. The agent stays responsive when a Gateway call fails ──────────────────
+# Section 3 tested the pieces; this runs a whole agent turn with a stub model
+# (no AWS calls) so the loop is exercised end to end: the model asks for a
+# Gateway tool, the tool fails, and the turn still finishes with a reply.
+print()
+print("=" * 78)
+print("4. AGENT TURN WITH A FAILING GATEWAY TOOL (stub model, no AWS calls)")
+print("=" * 78)
+
+from strands.models.model import Model  # noqa: E402
+from strands.types.tools import ToolResult  # noqa: E402
+
+
+class StubModel(Model):
+    """Deterministic stand-in for the LLM: asks for a tool, then answers."""
+
+    def __init__(self) -> None:
+        self.turns = 0
+
+    def update_config(self, **model_config) -> None:  # pragma: no cover
+        return None
+
+    def get_config(self) -> dict:  # pragma: no cover
+        return {}
+
+    def structured_output(self, **kwargs):  # pragma: no cover
+        raise NotImplementedError
+
+    async def stream(self, messages, tool_specs=None, system_prompt=None, **kwargs):
+        self.turns += 1
+        saw_tool_result = any(
+            any("toolResult" in block for block in (m.get("content") or []))
+            for m in messages
+        )
+        yield {"messageStart": {"role": "assistant"}}
+        if not saw_tool_result:
+            yield {"contentBlockStart": {"start": {"toolUse": {
+                "name": "order-tracker___get_order", "toolUseId": "stub-1"}}}}
+            yield {"contentBlockDelta": {"delta": {"toolUse": {"input": '{"order_id": "ORD-001"}'}}}}
+        else:
+            yield {"contentBlockDelta": {"delta": {"text": (
+                "I could not look up that order right now. Please try again in a "
+                "moment, or call support on 1-800-555-0199."
+            )}}}
+        yield {"contentBlockStop": {}}
+        yield {"messageStop": {"stopReason": "tool_use" if not saw_tool_result else "end_turn"}}
+
+
+@agent_module.tool(name="order-tracker___get_order", description="Order lookup (stub that fails)")
+def _failing_order_lookup(order_id: str) -> str:
+    raise RuntimeError(
+        "ClientError: AccessDenied; endpoint=https://wah32tfea3.execute-api.us-east-1.amazonaws.com "
+        "role=arn:aws:iam::032189013563:role/csai-gateway-role"
+    )
+
+
+stub_agent = agent_module.Agent(
+    model=StubModel(),
+    tools=[_failing_order_lookup],
+    hooks=[agent_module.GatewayErrorHook(gateway_available=True)],
+    system_prompt="test agent — gateway failure path",
+)
+
+try:
+    turn = stub_agent("Can you track order ORD-001?")
+    reply = turn.message["content"][0]["text"]
+    crashed = None
+except Exception as exc:  # pragma: no cover
+    crashed, reply = exc, ""
+print(f"  model turns: {stub_agent.model.turns} | crashed: {crashed!r}")
+print(f"  reply: {reply!r}")
+
+check("turn completes instead of raising", crashed is None, repr(crashed))
+check("agent answers the customer", bool(reply.strip()))
+check("reply offers a next step", agent_module.SUPPORT_LINE in reply)
+
+tool_results = [
+    block["toolResult"]
+    for message in stub_agent.messages
+    for block in (message.get("content") or [])
+    if isinstance(block, dict) and "toolResult" in block
+]
+print(f"  tool results in the conversation: {len(tool_results)}")
+if tool_results:
+    result_text = json.dumps(tool_results[0])
+    print(f"  result seen by the model: {tool_results[0].get('content')!r}"[:300])
+    check("failed call returns an error result, not a crash", tool_results[0].get("status") == "error")
+    check("result names the failed operation", "the order lookup" in result_text)
+    for leaked in ("032189013563", "execute-api", "arn:aws", "AccessDenied"):
+        check(f"no internals reach the model ({leaked})", leaked not in result_text)
+else:
+    check("the failing call produced a tool result", False, "no tool results found")
+
 # ── Summary ─────────────────────────────────────────────────────────────────
 print()
 print("=" * 78)

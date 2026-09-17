@@ -149,5 +149,15 @@ ERROR:CSAI_Agent:gateway tools unavailable: the client initialization failed: un
   rewritten result -> 'Gateway failure: the refund request could not be completed — the service returned an error. No order or refund data is available for this request and nothing was changed. Tell the customer plainly that the refund request is unavailable right now, do not invent order, refund or tracking details, and offer to retry in a moment or to call support on 1-800-555-0199.'
 
 ==============================================================================
-SUMMARY: 60/60 checks passed
+4. AGENT TURN WITH A FAILING GATEWAY TOOL (stub model, no AWS calls)
+==============================================================================
+
+Tool #1: order-tracker___get_order
+I could not look up that order right now. Please try again in a moment, or call support on 1-800-555-0199.  model turns: 2 | crashed: None
+  reply: 'I could not look up that order right now. Please try again in a moment, or call support on 1-800-555-0199.'
+  tool results in the conversation: 1
+  result seen by the model: [{'text': 'Gateway failure: the order lookup could not be completed — the service returned an error. No order or refund data is available for this request and nothing was changed. Tell the customer plainly that the order lookup is unavailable right now, do not invent orde
+
+==============================================================================
+SUMMARY: 69/69 checks passed
 All required fixes verified.
