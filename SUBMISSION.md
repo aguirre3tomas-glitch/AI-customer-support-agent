@@ -17,6 +17,7 @@ was verified, and where the evidence lives.
 | Written reflection | this file, below |
 | CloudWatch alarm on runtime errors (extra) | `evidence/cloudwatch-alarm.txt` |
 | Regression suite for the three review findings | `evidence/test-required-fixes.txt` (60/60 checks) |
+| Tool invocations behind the captured outputs (annotation) | `evidence/tool-invocations-annotated.txt` |
 
 Every test ran against the deployed Runtime (`agentcore invoke`), not a local
 harness, and the raw command output is stored next to this file.
