@@ -1,24 +1,31 @@
-### Test 1 — Order Tracking
+### test1-order-tracking
 COMMAND: agentcore invoke '{"prompt": "Can you track order ORD-001?", "customer_id": "CUST-123", "session_id": "t1"}'
 
 ┌────────────────────────── customer_support_agent ───────────────────────────┐
-│ Session: d38fd588-d70a-449f-ab64-309a5afcc44c                               │
-│ Request ID: 8b61a479-1f76-4768-9dbf-079a1907442c                            │
+│ Session: e72d1b75-d05f-45a2-9d31-20662655c5ce                               │
+│ Request ID: bd2824de-041a-4944-98c6-be17d5140630                            │
 │ ARN:                                                                        │
 │ arn:aws:bedrock-agentcore:us-east-1:032189013563:runtime/customer_support_a │
-│ gent-hFhMtcHN2g                                                             │
+│ gent-B9F2iuHqsB                                                             │
 │ Logs: aws logs tail                                                         │
-│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
-│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --follow                │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-B9F2iuHqsB-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/19/[runtime-logs" --follow                │
 │       aws logs tail                                                         │
-│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
-│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --since 1h              │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-B9F2iuHqsB-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/19/[runtime-logs" --since 1h              │
 │ GenAI Dashboard:                                                            │
 │ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-obse │
 │ rvability/agent-core                                                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 Response:
-Your order ORD-001 has shipped via UPS with tracking number **TRK987654321** 
-and is expected to be delivered on **2026-09-18**. The order contains 1 × 
-Wireless Headphones Pro ($89.99).
+Order **ORD-001** is **SHIPPED** and on its way to you.  
+- **Item:** Wireless Headphones Pro  
+- **Total:** $89.99  
+- **Carrier:** UPS  
+- **Tracking number:** TRK987654321  
+- **Estimated delivery:** September 21, 2026
+
+--- tool calls logged by the runtime (CloudWatch) ---
+Tool #1: order-tracker___get_order
+

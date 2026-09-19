@@ -16,7 +16,7 @@ import boto3
 
 REGION = "us-east-1"
 ACCT = "032189013563"
-ROLE = "AmazonBedrockAgentCoreSDKRuntime-us-east-1-aa96c3a063"
+ROLE_PREFIX = "AmazonBedrockAgentCoreSDKRuntime-us-east-1-"
 POLICY_NAME = "CsaiAgentExtraPermissions"
 
 policy = {
@@ -88,6 +88,19 @@ policy = {
 }
 
 iam = boto3.client("iam", region_name=REGION)
+
+# The toolkit names the execution role with a hash suffix that changes every time
+# the deployment is recreated, so it is resolved by prefix rather than hardcoded.
+_roles = sorted(
+    role["RoleName"]
+    for role in iam.list_roles(MaxItems=1000)["Roles"]
+    if role["RoleName"].startswith(ROLE_PREFIX)
+)
+if not _roles:
+    raise SystemExit(f"no execution role with prefix {ROLE_PREFIX!r} — deploy the agent first")
+ROLE = _roles[-1]
+print(f"execution role: {ROLE}")
+
 iam.put_role_policy(
     RoleName=ROLE,
     PolicyName=POLICY_NAME,

@@ -103,10 +103,10 @@ _ensure_playwright_driver()
 # ── TODO 2 — Configuration ────────────────────────────────────────────────────
 # Values collected while setting up the AWS resources (Part 1).
 
-GATEWAY_URL = "https://customersupportgateway-4grevewyco.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp"
-KB_ID       = "PGV0IQVSWO"
+GATEWAY_URL = "https://customersupportgateway-5ucedqpm66.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp"
+KB_ID       = "RUCL1SM481"
 REGION      = "us-east-1"
-MEMORY_ID   = "CustomerSupportMemory-HQ2KtBHkEs"
+MEMORY_ID   = "CustomerSupportMemory-P8I3l72siG"
 
 
 # ── TODO 3 — Model and Clients ────────────────────────────────────────────────
@@ -619,7 +619,12 @@ Tools you can reach:
 - search_knowledge_base — product specs, return policy, warranty, loyalty program.
   Search this before answering any policy or product question.
 - calculate_loyalty_discount — runs the exact discount math (points + tier) in a sandbox.
-  Use it whenever the customer asks what they would pay.
+  Call it for every question about a discount, savings or final price. Never work
+  the numbers out yourself and never quote a total the tool did not return: the
+  tier discount applies to the order total *after* the redeemed points, and the
+  redeemed points come in 500-point blocks capped at half the order, so mental
+  arithmetic gets it wrong. Use the tool's figures verbatim, including the
+  points redeemed and the points left.
 - browser — for anything on the public web (for example, reading a page title).
   Browser session names must use lowercase letters, digits and dashes only
   (e.g. `udacity-page`) — underscores are rejected.

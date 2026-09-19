@@ -1,0 +1,16 @@
+### Gateway verification over MCP (raw protocol, not the agent)
+endpoint: https://customersupportgateway-5ucedqpm66.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp
+
+tools exposed by the Gateway: 6
+  - order-tracker___get_customer
+  - order-tracker___get_customer_orders
+  - order-tracker___get_order
+  - refund-processor___check_refund_status
+  - refund-processor___get_return_label
+  - refund-processor___initiate_refund
+
+--- tools/call: order-tracker___get_order (API Gateway target) ---
+"{\n  \"status\": \"success\",\n  \"toolUseId\": \"verify-order-tracker___get_order\",\n  \"content\": [\n    {\n      \"text\": \"{\\\"order_id\\\":\\\"ORD-001\\\",\\\"customer_id\\\":\\\"CUST-123\\\",\\\"status\\\":\\\"SHIPPED\\\",\\\"items\\\":[{\\\"name\\\":\\\"Wireless Headphones Pro\\\",\\\"qty\\\":1,\\\"price\\\":89.99}],\\\"total\\\":89.99,\\\"tracking_number\\\":\\\"TRK987654321\\\",\\\"carrier\\\":\\\"UPS\\\",\\\"estimated_delivery\\\":\\\"2026-09-21\\\"}\"\n    }\n  ],\n  \"isError\": false\n}"
+
+--- tools/call: refund-processor___initiate_refund (Lambda target) ---
+"{\n  \"status\": \"success\",\n  \"toolUseId\": \"verify-refund-processor___initiate_refund\",\n  \"content\": [\n    {\n      \"text\": \"{\\\"statusCode\\\":200,\\\"body\\\":\\\"{\\\\\\\"refund_id\\\\\\\": \\\\\\\"REF-B4A036GD\\\\\\\", \\\\\\\"order_id\\\\\\\": \\\\\\\"ORD-002\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"APPROVED\\\\\\\", \\\\\\\"amount\\\\\\\": 0, \\\\\\\"message\\\\\\\": \\\\\\\"Refund approved. Credit appears in 3-5 business days.\\\\\\\", \\\\\\\"created_at\\\\\\\": \\\\\\\"2026-09-19T16:12:24.891026\\\\\\\"}\\\"}\"\n    }\n  ],\n  \"isError\": false\n}"

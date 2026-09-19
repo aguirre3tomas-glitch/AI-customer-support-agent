@@ -3,14 +3,23 @@
 Usage: uv run python ../scripts/tests/runtime_diag.py "sh -c 'ls /var/task'"
 """
 import json
+import pathlib
 import sys
 import uuid
 
 import boto3
 
-RUNTIME_ARN = (
-    "arn:aws:bedrock-agentcore:us-east-1:032189013563:runtime/customer_support_agent-hFhMtcHN2g"
-)
+# The runtime ARN carries a suffix that changes with every deployment, so it is
+# read from the AgentCore config instead of being hardcoded.
+_CFG = pathlib.Path(__file__).resolve().parents[2] / "starter" / ".bedrock_agentcore.yaml"
+RUNTIME_ARN = None
+for line in _CFG.read_text(encoding="utf-8").splitlines():
+    stripped = line.strip()
+    if stripped.startswith("agent_arn:") and stripped.split(":", 1)[1].strip() not in ("", "null"):
+        RUNTIME_ARN = stripped.split(":", 1)[1].strip()
+if not RUNTIME_ARN:
+    raise SystemExit(f"no agent_arn in {_CFG} — deploy the agent first")
+print(f"runtime: {RUNTIME_ARN}")
 
 cmd = sys.argv[1] if len(sys.argv) > 1 else "sh -c 'ls -la /var/task | head -20'"
 

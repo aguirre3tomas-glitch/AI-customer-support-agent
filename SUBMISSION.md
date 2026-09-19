@@ -18,18 +18,21 @@ was verified, and where the evidence lives.
 | CloudWatch alarm on runtime errors (extra) | `evidence/cloudwatch-alarm.txt` |
 | Regression suite for the three review findings | `evidence/test-required-fixes.txt` (69/69 checks) |
 | Tool invocations behind the captured outputs (annotation) | `evidence/tool-invocations-annotated.txt` |
+| Gateway verified over MCP, both targets, no agent in the loop | `evidence/mcp-gateway-verification.txt` |
 
 Every test ran against the deployed Runtime (`agentcore invoke`), not a local
-harness, and the raw command output is stored next to this file.
+harness, and the raw command output is stored next to this file. Each test file
+also carries the tool calls the runtime logged for that turn, read from its
+CloudWatch log stream.
 
 ## Result summary
 
-1. **Order tracking** — ORD-001 → shipped, UPS, tracking `TRK987654321`, ETA 2026-09-18.
-2. **Refund** — ORD-002 refunded, `REF-…` returned, APPROVED, "3–5 business days".
-3. **Knowledge base** — Platinum tier answer pulled from the catalog: same-day shipping, 15% discount, priority support.
-4. **Memory** — session A introduced "Jane, prefers concise"; session B (new session, same customer) recalled both.
-5. **Loyalty math** — 4,000 points redeemed ($40), 10% Gold tier (−$11), final $99, 150 points earned, 400 remaining — computed in the Code Interpreter sandbox.
-6. **Browser** — live page title read through the AgentCore browser session.
+1. **Order tracking** — ORD-001 → shipped, UPS, tracking `TRK987654321`, ETA 2026-09-21 (tool: `order-tracker___get_order`, API Gateway target).
+2. **Refund** — ORD-002 refunded, `REF-QJ8N3BW7`, APPROVED, "3–5 business days" (tools: `order-tracker___get_order` then `refund-processor___initiate_refund`, direct Lambda target).
+3. **Knowledge base** — Platinum tier answer retrieved from the catalog: same-day shipping, 15% discount, priority support (tool: `search_knowledge_base`).
+4. **Memory** — session A introduced "Jane, prefers concise responses"; session B — a separate session, same customer — opened with "Hello Jane! Yes, I remember you're a Gold loyalty member and you prefer concise responses."
+5. **Loyalty math** — computed in the Code Interpreter sandbox (tool: `calculate_loyalty_discount`): 4,000 points redeemed ($40), 10% Gold tier ($11), final $99, 400 points remaining, 150 earned.
+6. **Browser** — the live page title read through the AgentCore browser session (tool: `browser`).
 
 ## Environment notes (honest record)
 
@@ -39,6 +42,12 @@ harness, and the raw command output is stored next to this file.
   (`CustomerSupportKB`, Titan Embeddings v2, S3 data source, ingestion COMPLETE)
   — Bedrock provisions and runs the vector store. The agent code is unchanged:
   it still calls `bedrock-agent-runtime.retrieve(knowledgeBaseId=KB_ID, …)`.
+- The lab account was **reset between sessions and came back empty** — no runtime,
+  Gateway, memory, knowledge base, Lambda or bucket. Everything the evidence above
+  was captured against was then rebuilt from the idempotent scripts in `scripts/`,
+  which closed three gaps they had (REST API method responses, knowledge base
+  bucket and role creation, and identifiers carrying a deployment-specific
+  suffix). Detail in `PLAN.md`.
 - Runtime deploys as `direct_code_deploy` on Python 3.13 (the toolkit CLI caps
   below 3.14), linux/arm64, from the frozen `starter/requirements.txt`.
 - Deep-dive log of every infrastructure step, bug and fix: `PLAN.md`.
@@ -88,9 +97,10 @@ missing from both paths, and the fallback returned neither `points_redeemed` nor
 `remaining_points` (int) are always present and always numeric. The regression
 suite asserts both paths for the same keys and types.
 
-The previously captured Test 5 output remains valid: for 4250 points on a $150
-order the cap never binds, so the figures ($40 points, $11 tier, $99 total, 400
-remaining) are identical before and after the change.
+The Test 5 output captured after the change confirms it end to end: 4250 points on
+a $150 order redeem 4,000 points ($40), the Gold tier adds $11 (10% of the $110
+subtotal), the final total is $99 and 400 points remain. The agent now calls the
+calculator instead of working the numbers out itself.
 
 ## Reflection
 

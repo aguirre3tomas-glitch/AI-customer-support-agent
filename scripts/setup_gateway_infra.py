@@ -72,7 +72,13 @@ def ensure_get_method(api_id: str, resource_id: str, resource_path: str, op_name
             restApiId=api_id, resourceId=resource_id, httpMethod="GET",
             authorizationType="NONE", operationName=op_name,
         )
-        print(f"  method created: GET {resource_path} (op={op_name})")
+        # A method with no response has no `responses` block in the exported OAS,
+        # and the Gateway's parser rejects the whole spec ("responses is missing"),
+        # leaving the order-tracker target FAILED. Create it up front.
+        apigw.put_method_response(
+            restApiId=api_id, resourceId=resource_id, httpMethod="GET", statusCode="200",
+        )
+        print(f"  method created: GET {resource_path} (op={op_name}) + 200 response")
 
     try:
         apigw.get_integration(restApiId=api_id, resourceId=resource_id, httpMethod="GET")

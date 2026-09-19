@@ -1,24 +1,29 @@
-### Test 2 — Refund Processing
-COMMAND: agentcore invoke (refund Kindle ORD-002)
+### test2-refund
+COMMAND: agentcore invoke '{"prompt": "I want to return my Kindle Paperwhite (ORD-002). Please initiate a refund.", "customer_id": "CUST-123", "session_id": "t2"}'
 
 ┌────────────────────────── customer_support_agent ───────────────────────────┐
-│ Session: 457d636a-2207-49dc-acec-f952629a50e6                               │
-│ Request ID: 8addc5fd-c6e5-4c3f-a510-d30bf7eeb39d                            │
+│ Session: e72d1b75-d05f-45a2-9d31-20662655c5ce                               │
+│ Request ID: 25763957-c704-452b-8cba-7117a0e90e97                            │
 │ ARN:                                                                        │
 │ arn:aws:bedrock-agentcore:us-east-1:032189013563:runtime/customer_support_a │
-│ gent-hFhMtcHN2g                                                             │
+│ gent-B9F2iuHqsB                                                             │
 │ Logs: aws logs tail                                                         │
-│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
-│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --follow                │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-B9F2iuHqsB-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/19/[runtime-logs" --follow                │
 │       aws logs tail                                                         │
-│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
-│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --since 1h              │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-B9F2iuHqsB-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/19/[runtime-logs" --since 1h              │
 │ GenAI Dashboard:                                                            │
 │ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-obse │
 │ rvability/agent-core                                                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 Response:
-Your refund for the Kindle Paperwhite (ORD-002) has been approved. A credit of 
-$139.99 will appear in your account within 3-5 business days. Your refund ID is
-**REF-1ML4CX45**.
+Your refund for the Kindle Paperwhite (Order #ORD-002) has been approved with 
+refund ID **REF-QJ8N3BW7**. The credit will appear on your account in 3-5 
+business days.
+
+--- tool calls logged by the runtime (CloudWatch) ---
+Tool #1: order-tracker___get_order
+Tool #1: refund-processor___initiate_refund
+

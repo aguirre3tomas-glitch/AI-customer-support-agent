@@ -11,7 +11,8 @@ import json
 import boto3
 
 REGION = "us-east-1"
-LOG_GROUP = "/aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT"
+LOG_GROUP_PREFIX = "/aws/bedrock-agentcore/runtimes/"
+AGENT_RUNTIME_NAME = "customer_support_agent"
 FILTER_NAME = "customer_support_agent_errors"
 METRIC_NAMESPACE = "CsaiAgent"
 METRIC_NAME = "AgentRuntimeErrors"
@@ -19,6 +20,18 @@ ALARM_NAME = "customer-support-agent-errors"
 
 logs = boto3.client("logs", region_name=REGION)
 cw = boto3.client("cloudwatch", region_name=REGION)
+
+# The runtime id carries a suffix that changes on every deployment, so the log
+# group is discovered instead of hardcoded.
+_candidates = sorted(
+    group["logGroupName"]
+    for group in logs.describe_log_groups(logGroupNamePrefix=LOG_GROUP_PREFIX)["logGroups"]
+    if AGENT_RUNTIME_NAME in group["logGroupName"] and group["logGroupName"].endswith("-DEFAULT")
+)
+if not _candidates:
+    raise SystemExit("runtime log group not found — deploy the agent first")
+LOG_GROUP = _candidates[-1]
+print(f"log group: {LOG_GROUP}")
 
 logs.put_metric_filter(
     logGroupName=LOG_GROUP,

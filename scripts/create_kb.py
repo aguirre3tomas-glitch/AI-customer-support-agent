@@ -32,6 +32,68 @@ iam = boto3.client("iam", region_name=REGION)
 
 cfg = json.loads(CFG_PATH.read_text(encoding="utf-8")) if CFG_PATH.exists() else {}
 role_arn = f"arn:aws:iam::{ACCT}:role/{ROLE_NAME}"
+s3 = boto3.client("s3", region_name=REGION)
+
+# ── 0. prerequisites: the bucket and the service role ────────────────────────
+# Both are created here so this script also works on a fresh account. A lab reset
+# wipes them, and create_knowledge_base then fails with "Unable to verify the
+# specified embedding model. Please verify the role permissions..." because the
+# role it is told to assume does not exist.
+try:
+    s3.head_bucket(Bucket=BUCKET)
+    print(f"bucket exists: {BUCKET}")
+except ClientError:
+    s3.create_bucket(Bucket=BUCKET)
+    print(f"bucket created: {BUCKET}")
+
+catalog = REPO / "starter" / "product_catalog.txt"
+s3.upload_file(str(catalog), BUCKET, "product_catalog.txt")
+print(f"catalog uploaded: {catalog.name} -> s3://{BUCKET}/product_catalog.txt")
+
+try:
+    iam.create_role(
+        RoleName=ROLE_NAME,
+        AssumeRolePolicyDocument=json.dumps(
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {"Service": "bedrock.amazonaws.com"},
+                        "Action": "sts:AssumeRole",
+                    }
+                ],
+            }
+        ),
+    )
+    print(f"role created: {ROLE_NAME}")
+except ClientError as exc:
+    if exc.response["Error"]["Code"] != "EntityAlreadyExists":
+        raise
+    print(f"role exists: {ROLE_NAME}")
+
+iam.put_role_policy(
+    RoleName=ROLE_NAME,
+    PolicyName="CsaiKbAccess",
+    PolicyDocument=json.dumps(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": ["s3:GetObject", "s3:ListBucket"],
+                    "Resource": [f"arn:aws:s3:::{BUCKET}", f"arn:aws:s3:::{BUCKET}/*"],
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": ["bedrock:InvokeModel"],
+                    "Resource": [f"arn:aws:bedrock:{REGION}::foundation-model/amazon.titan-embed-text-v2:0"],
+                },
+            ],
+        }
+    ),
+)
+print("role policy attached: CsaiKbAccess")
 
 # ── 1. find or create the KB ──────────────────────────────────────────────────
 kb_id = cfg.get("kb_id")

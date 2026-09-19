@@ -2,24 +2,34 @@
 COMMAND: agentcore invoke '{"prompt": "Hi, I am Jane. I prefer concise responses.", "customer_id": "CUST-123", "session_id": "s-A"}'
 
 ┌────────────────────────── customer_support_agent ───────────────────────────┐
-│ Session: d38fd588-d70a-449f-ab64-309a5afcc44c                               │
-│ Request ID: ce381641-f579-4d0a-a7d9-560574cd89e2                            │
+│ Session: e72d1b75-d05f-45a2-9d31-20662655c5ce                               │
+│ Request ID: adf1cf5b-2659-4ea4-97ff-069d26cbdd2c                            │
 │ ARN:                                                                        │
 │ arn:aws:bedrock-agentcore:us-east-1:032189013563:runtime/customer_support_a │
-│ gent-hFhMtcHN2g                                                             │
+│ gent-B9F2iuHqsB                                                             │
 │ Logs: aws logs tail                                                         │
-│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
-│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --follow                │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-B9F2iuHqsB-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/19/[runtime-logs" --follow                │
 │       aws logs tail                                                         │
-│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
-│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --since 1h              │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-B9F2iuHqsB-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/19/[runtime-logs" --since 1h              │
 │ GenAI Dashboard:                                                            │
 │ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-obse │
 │ rvability/agent-core                                                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 Response:
-Hello Jane! Great to see you again. Your order **ORD-001** (Wireless Headphones
-Pro) is shipped via **UPS** with tracking number **TRK987654321**, estimated to
-arrive on **2026-09-18**. Let me know if you need anything else!
+Hello Jane! I have your details:
+
+- **Gold member** with 4,250 points  
+- Order **ORD‑001** (Wireless Headphones Pro, $89.99) shipped via UPS, tracking
+**TRK987654321**, estimated delivery **Sep 21, 2026**  
+- Refund **ORD‑002** (Kindle Paperwhite) approved, refund ID **REF‑XK97NKN0**  
+
+How can I help you today?
+
+--- tool calls logged by the runtime (CloudWatch) ---
+Tool #1: refund-processor___initiate_refund
+Tool #1: search_knowledge_base
+Tool #1: calculate_loyalty_discount
 

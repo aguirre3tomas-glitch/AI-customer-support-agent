@@ -2,25 +2,33 @@
 COMMAND: agentcore invoke '{"prompt": "I am a Gold member with 4250 points. Calculate my discount on a $150 standard order.", "customer_id": "CUST-123", "session_id": "t5"}'
 
 ┌────────────────────────── customer_support_agent ───────────────────────────┐
-│ Session: d38fd588-d70a-449f-ab64-309a5afcc44c                               │
-│ Request ID: 277008a0-8820-4f43-9b3f-5889c34b2bc1                            │
+│ Session: e72d1b75-d05f-45a2-9d31-20662655c5ce                               │
+│ Request ID: 56d3a815-e878-40ff-9bab-874ddd963d05                            │
 │ ARN:                                                                        │
 │ arn:aws:bedrock-agentcore:us-east-1:032189013563:runtime/customer_support_a │
-│ gent-hFhMtcHN2g                                                             │
+│ gent-B9F2iuHqsB                                                             │
 │ Logs: aws logs tail                                                         │
-│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
-│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --follow                │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-B9F2iuHqsB-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/19/[runtime-logs" --follow                │
 │       aws logs tail                                                         │
-│ /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT   │
-│ --log-stream-name-prefix "2026/09/16/[runtime-logs" --since 1h              │
+│ /aws/bedrock-agentcore/runtimes/customer_support_agent-B9F2iuHqsB-DEFAULT   │
+│ --log-stream-name-prefix "2026/09/19/[runtime-logs" --since 1h              │
 │ GenAI Dashboard:                                                            │
 │ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-obse │
 │ rvability/agent-core                                                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 Response:
-Your Gold membership discount on a $150 standard order is $51.00, bringing your
-final total to **$99.00**. You used 4,000 points ($40 value) and received an 
-additional $11 tier discount. You earned 150 new points and have 400 points 
-remaining.
+You save **$51** on your $150 order.  
+Your final total is **$99**.  
+
+- **$40** discount from redeeming 4,000 loyalty points  
+- **$11** discount from your Gold tier (10%)  
+- **Remaining points:** 400
+
+--- tool calls logged by the runtime (CloudWatch) ---
+Tool #1: order-tracker___get_order
+Tool #1: refund-processor___initiate_refund
+Tool #1: search_knowledge_base
+Tool #1: calculate_loyalty_discount
 

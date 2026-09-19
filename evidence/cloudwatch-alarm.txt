@@ -1,8 +1,9 @@
-metric filter 'customer_support_agent_errors' on /aws/bedrock-agentcore/runtimes/customer_support_agent-hFhMtcHN2g-DEFAULT
+log group: /aws/bedrock-agentcore/runtimes/customer_support_agent-B9F2iuHqsB-DEFAULT
+metric filter 'customer_support_agent_errors' on /aws/bedrock-agentcore/runtimes/customer_support_agent-B9F2iuHqsB-DEFAULT
 alarm 'customer-support-agent-errors': >5 errors / 5 min -> ALARM
 {
   "AlarmName": "customer-support-agent-errors",
-  "StateValue": "INSUFFICIENT_DATA",
+  "StateValue": "OK",
   "MetricName": "AgentRuntimeErrors",
   "Threshold": 5.0,
   "ComparisonOperator": "GreaterThanThreshold",

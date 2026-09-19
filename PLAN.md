@@ -11,6 +11,24 @@ Fuentes cruzadas: página de Prerequisites del classroom + README del starter re
 - [x] AWS CLI **v2.36.46** instalada (reemplaza la v1 que quedó en el venv del P1)
 - [x] **Credenciales del lab** — funcionan desde la máquina local (el token viejo era el problema; se transfirió el correcto desde la VM con `fold -w 76`). ⚠️ Al cerrarse la sesión, Vocareum revoca todo (`voc-cancel-cred`) → recopiar el trío al reiniciar el lab
 
+## Reconstrucción completa (2026-09-19)
+
+El lab se reseteó (la cuenta volvió **vacía**: sin runtime, gateway, memory, KB, lambdas ni bucket) y hubo que reconstruir todo desde cero con los scripts idempotentes. IDs vigentes:
+
+| Recurso | ID |
+|---|---|
+| REST API | `9l51jjulo9` (stage `prod`) |
+| Gateway | `customersupportgateway-5ucedqpm66` (6 tools, ambos targets READY) |
+| Knowledge Base | `RUCL1SM481` (data source `KUOAGEMS8H`) |
+| Memory | `CustomerSupportMemory-P8I3l72siG` |
+| Runtime | `customer_support_agent-B9F2iuHqsB` |
+
+Tres cosas que la reconstrucción destapó y quedaron arregladas en los scripts:
+
+1. **`setup_gateway_infra.py` no creaba el method response** → el OAS exportado salía sin `responses` y el parser del Gateway tiraba el target `order-tracker` a FAILED. Ahora lo crea junto con el método (era la causa raíz del bug que antes se parcheaba a mano con `repair_rest_api.py`).
+2. **`create_kb.py` asumía bucket y rol existentes** → en una cuenta limpia fallaba con "Unable to verify the specified embedding model". Ahora crea el bucket, sube el catálogo y crea `csai-kb-role` con su política si faltan.
+3. **IDs stale tras el reset** → `grant_runtime_permissions.py` resuelve el rol del runtime por prefijo (el sufijo cambia en cada deploy) y `create_cloudwatch_alarm.py` descubre el log group en vez de tenerlo hardcodeado. El `.bedrock_agentcore.yaml` tenía `agent_id/agent_arn` del runtime muerto, lo que hacía que `agentcore deploy` intentara un Update sobre un runtime inexistente.
+
 ## Progreso Fase 1
 
 - [x] **Lambdas (2)** — `order-tracker` + `refund-processor` desplegadas (Python 3.12) y probadas: ORD-001 → `TRK987654321`/UPS; refund → `REF-…`/`APPROVED`. Rol de ejecución: `csai-lambda-basic-role` · Script: `scripts/deploy_lambdas.py`

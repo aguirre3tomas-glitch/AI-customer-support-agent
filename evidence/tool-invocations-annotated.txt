@@ -1,20 +1,32 @@
 ### Tool invocations behind the captured test outputs — annotation
 
-This file is an ANNOTATION added on 2026-09-17, separate from the raw outputs it
-refers to. The raw files (`test1-*.txt` … `test6-*.txt`) are untouched: they are
-the verbatim `agentcore invoke` output, which prints the agent's final answer and
-not the intermediate tool calls. This page maps each answer back to the Gateway
-tool that produced it and shows why the data could not have come from anywhere
-else.
+The raw evidence files (`test1-*.txt` … `test6-*.txt`) are verbatim
+`agentcore invoke` output. Since `agentcore invoke` prints only the agent's final
+answer, each file ends with a section — `--- tool calls logged by the runtime
+(CloudWatch) ---` — holding the tool invocations the agent runtime logged for that
+turn, read straight from the runtime's CloudWatch log stream (the Strands agent
+logs one `Tool #N: <name>` line per call). Nothing in those files was edited by
+hand.
 
-Two Gateway targets are exercised, one of each integration type required:
+The capture window is the 90 seconds before each query, and the tests run back to
+back, so a file can list a previous test's call as well; the last line is always
+that test's own call.
+
+Two Gateway targets are exercised, one of each integration type the rubric asks
+for:
 
 | Test | Tool invoked | Gateway target (integration) | Backing service |
 |---|---|---|---|
 | 1 — Order tracking | `order-tracker___get_order` | `order-tracker` (API Gateway REST proxy) | Lambda `order-tracker` |
-| 2 — Refund | `refund-processor___initiate_refund` | `refund-processor` (direct Lambda) | Lambda `refund-processor` |
+| 2 — Refund | `order-tracker___get_order` then `refund-processor___initiate_refund` | `refund-processor` (direct Lambda) | Lambda `refund-processor` |
+| 3 — Knowledge base | `search_knowledge_base` | — (local tool, Bedrock Retrieve API) | Bedrock Knowledge Base |
+| 5 — Loyalty discount | `calculate_loyalty_discount` | — (local tool, Code Interpreter) | AgentCore Code Interpreter |
+| 6 — Browser | `browser` | — (local tool) | AgentCore Browser |
 
-**Why these responses prove the tools ran**
+Test 2 is the one that matters for the Gateway criterion: a single turn calls both
+targets, the API-based one and the Lambda-based one.
+
+**Why these responses prove the tools ran, not just that they were called**
 
 - *Test 1.* The tracking number `TRK987654321`, the carrier `UPS` and the order
   line item (`Wireless Headphones Pro`, $89.99) live only in the `order-tracker`
@@ -22,11 +34,10 @@ Two Gateway targets are exercised, one of each integration type required:
   knowledge base — a search of `product_catalog.txt` for `ORD-001` or
   `TRK987654321` returns zero matches — and they are not in the model's training
   data. The delivery date is stronger still: the Lambda computes it at runtime as
-  `now + 2 days`, so `2026-09-18` did not exist anywhere until the function ran.
-  The agent has no other route to that data: the answer could only have been
-  produced by a successful call to the API-based Gateway target.
+  `now + 2 days`, so the date in the answer did not exist anywhere until the
+  function ran. The agent has no other route to that data.
 - *Test 2.* The refund identifier is generated at runtime inside the Lambda
-  (`_new_refund_id()` returns `"REF-" +` eight random characters), so `REF-1ML4CX45`
+  (`_new_refund_id()` returns `"REF-" +` eight random characters), so `REF-QJ8N3BW7`
   could not pre-exist anywhere. Its presence, together with the `APPROVED` status
   and the `3-5 business days` window, is proof that the Lambda-based Gateway target
   executed and returned a well-formed result.
@@ -37,22 +48,16 @@ static file, so both responses are tool-derived rather than generated.
 **Well-formed results, not errors**
 
 Both captured answers contain the fields the underlying service returned
-(`shipping_status`, `carrier`, `tracking_number`, `estimated_delivery` for the
-order; `refund_id`, `status`, processing window for the refund). Neither is an
-error payload, a retry message, or an empty result.
+(`status`, `carrier`, `tracking_number`, `estimated_delivery` for the order;
+`refund_id`, `status`, processing window for the refund). Neither is an error
+payload, a retry message, or an empty result.
 
-**MCP-level verification (development step)**
+**Independent protocol-level verification**
 
-Before the agent tests were run, the Gateway was verified directly at the protocol
-level: the MCP endpoint listed all six tools, and `tools/call` was issued for both
-targets — `get_order` for ORD-001 (returned the tracking record) and
-`initiate_refund` for ORD-002 (created a refund in APPROVED state). That confirms
-the targets themselves, independently of the agent.
-
-**Note on capturing the tool calls in the log**
-
-`agentcore invoke` prints only the final response — it has no verbosity flag that
-exposes tool calls. The invocations are visible in the runtime's CloudWatch log
-stream (the strands agent logs each `Tool #N` line). Capturing those lines
-alongside a re-run is the one piece of evidence this delivery could add if the lab
-environment is available again; the outputs above stand on their own meanwhile.
+`evidence/mcp-gateway-verification.txt` captures the Gateway checked directly
+over MCP, without the agent in the loop: the endpoint lists all six tools, and
+`tools/call` is issued for both targets — `order-tracker___get_order` for ORD-001
+(returns the tracking record) and `refund-processor___initiate_refund` for
+ORD-002 (creates a refund in APPROVED state, `isError: false`). That confirms the
+Gateway, its two targets and the Lambda backends independently of anything the
+model did.
