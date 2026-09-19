@@ -1,4 +1,4 @@
-# Project 2 — Customer Support AI Agent (cd14763)
+# Project 2: Customer Support AI Agent (cd14763)
 
 Submission pack for the AgentCore customer support agent: what was built, how it
 was verified, and where the evidence lives.
@@ -8,12 +8,12 @@ was verified, and where the evidence lives.
 | Requirement | Where |
 |---|---|
 | `main.py` with all 8 TODO sections implemented (no `pass` placeholders) | `starter/main.py` |
-| Test 1 — Order Tracking | `evidence/test1-order-tracking.txt` |
-| Test 2 — Refund Processing | `evidence/test2-refund.txt` |
-| Test 3 — Knowledge Base (RAG) | `evidence/test3-knowledge-base.txt` |
-| Test 4 — Long-Term Memory (both sessions) | `evidence/test4a-memory-session-a.txt`, `evidence/test4b-memory-session-b.txt` |
-| Test 5 — Loyalty Discount Calculation | `evidence/test5-loyalty-discount.txt` |
-| Test 6 — Browser Tool | `evidence/test6-browser.txt` |
+| Test 1: Order Tracking | `evidence/test1-order-tracking.txt` |
+| Test 2: Refund Processing | `evidence/test2-refund.txt` |
+| Test 3: Knowledge Base (RAG) | `evidence/test3-knowledge-base.txt` |
+| Test 4: Long-Term Memory (both sessions) | `evidence/test4a-memory-session-a.txt`, `evidence/test4b-memory-session-b.txt` |
+| Test 5: Loyalty Discount Calculation | `evidence/test5-loyalty-discount.txt` |
+| Test 6: Browser Tool | `evidence/test6-browser.txt` |
 | Written reflection | this file, below |
 | CloudWatch alarm on runtime errors (extra) | `evidence/cloudwatch-alarm.txt` |
 | Regression suite for the three review findings | `evidence/test-required-fixes.txt` (69/69 checks) |
@@ -27,22 +27,22 @@ CloudWatch log stream.
 
 ## Result summary
 
-1. **Order tracking** — ORD-001 → shipped, UPS, tracking `TRK987654321`, ETA 2026-09-21 (tool: `order-tracker___get_order`, API Gateway target).
-2. **Refund** — ORD-002 refunded, `REF-QJ8N3BW7`, APPROVED, "3–5 business days" (tools: `order-tracker___get_order` then `refund-processor___initiate_refund`, direct Lambda target).
-3. **Knowledge base** — Platinum tier answer retrieved from the catalog: same-day shipping, 15% discount, priority support (tool: `search_knowledge_base`).
-4. **Memory** — session A introduced "Jane, prefers concise responses"; session B — a separate session, same customer — opened with "Hello Jane! Yes, I remember you're a Gold loyalty member and you prefer concise responses."
-5. **Loyalty math** — computed in the Code Interpreter sandbox (tool: `calculate_loyalty_discount`): 4,000 points redeemed ($40), 10% Gold tier ($11), final $99, 400 points remaining, 150 earned.
-6. **Browser** — the live page title read through the AgentCore browser session (tool: `browser`).
+1. **Order tracking:** ORD-001 shipped, UPS, tracking `TRK987654321`, ETA 2026-09-21 (tool: `order-tracker___get_order`, API Gateway target).
+2. **Refund:** ORD-002 refunded, `REF-QJ8N3BW7`, APPROVED, "3-5 business days" (tools: `order-tracker___get_order` then `refund-processor___initiate_refund`, direct Lambda target).
+3. **Knowledge base:** Platinum tier answer retrieved from the catalog, with same-day shipping, 15% discount and priority support (tool: `search_knowledge_base`).
+4. **Memory:** session A introduced "Jane, prefers concise responses"; session B, a separate session for the same customer, opened with "Hello Jane! Yes, I remember you're a Gold loyalty member and you prefer concise responses."
+5. **Loyalty math:** computed in the Code Interpreter sandbox (tool: `calculate_loyalty_discount`), 4,000 points redeemed ($40), 10% Gold tier ($11), final $99, 400 points remaining, 150 earned.
+6. **Browser:** the live page title read through the AgentCore browser session (tool: `browser`).
 
 ## Environment notes (honest record)
 
 - The lab account **denies `aoss:*` and `s3vectors:*`**, so the OpenSearch
   Serverless collection the setup page describes cannot be created here. The
   knowledge base is therefore a **Bedrock *managed* knowledge base**
-  (`CustomerSupportKB`, Titan Embeddings v2, S3 data source, ingestion COMPLETE)
-  — Bedrock provisions and runs the vector store. The agent code is unchanged:
+  (`CustomerSupportKB`, Titan Embeddings v2, S3 data source, ingestion COMPLETE),
+  in which Bedrock provisions and runs the vector store. The agent code is unchanged:
   it still calls `bedrock-agent-runtime.retrieve(knowledgeBaseId=KB_ID, …)`.
-- The lab account was **reset between sessions and came back empty** — no runtime,
+- The lab account was **reset between sessions and came back empty**: no runtime,
   Gateway, memory, knowledge base, Lambda or bucket. Everything the evidence above
   was captured against was then rebuilt from the idempotent scripts in `scripts/`,
   which closed three gaps they had (REST API method responses, knowledge base
@@ -57,7 +57,7 @@ CloudWatch log stream.
 Three issues were raised in review. All three were reproduced, fixed and covered
 by a regression suite that runs locally (`scripts/test_required_fixes.py`, output
 in `evidence/test-required-fixes.txt`, 69 checks). The suite includes a whole
-agent turn driven by a stub model — no AWS calls — in which a Gateway tool fails:
+agent turn driven by a stub model (no AWS calls) in which a Gateway tool fails:
 the turn still completes and the agent answers the customer.
 
 **1. Gateway failures were not surfaced clearly.** The order and refund tools are
@@ -76,23 +76,23 @@ turn entirely. Two failure modes are now handled at the Gateway boundary:
 
 Raw exception text is never forwarded: `_describe_failure()` classifies the error
 into a plain reason ("the request timed out", "the connection to the service
-failed", …) and `_failure_text()` walks the whole exception chain — including the
-`ExceptionGroup` wrapper the MCP client raises — because the outer message alone
+failed", …) and `_failure_text()` walks the whole exception chain, including the
+`ExceptionGroup` wrapper the MCP client raises, because the outer message alone
 says nothing about the cause. The final catch-all reply in `invoke()` no longer
 embeds the exception either.
 
 **2. Points redemption boundaries were wrong.** Redemption floors the balance to
 500-point blocks and caps the redeemed value at half the order, but the cap was
 applied *after* the floor, so the result could land off a block: a $45 order
-allowed 2250 points ($22.50) — inside the cap, yet not a valid redemption. The
-cap is now computed in integer cents and floored to a block as well, so both
-rules hold at once. Boundaries are tested just below, at and above a 500-point
-boundary, plus orders where the cap binds.
+allowed 2250 points ($22.50), which is inside the cap but is not a valid
+redemption. The cap is now computed in integer cents and floored to a block as
+well, so both rules hold at once. Boundaries are tested just below, at and above
+a 500-point boundary, plus orders where the cap binds.
 
 **3. The result did not expose every required field.** `tier_discount_pct` was
 missing from both paths, and the fallback returned neither `points_redeemed` nor
 `remaining_points`. The fallback now builds its result through
-`_fallback_breakdown()`, which returns the same key set as the sandbox path —
+`_fallback_breakdown()`, which returns the same key set as the sandbox path:
 `points_redeemed` (int), `tier_discount_pct` (float, percentage form) and
 `remaining_points` (int) are always present and always numeric. The regression
 suite asserts both paths for the same keys and types.
@@ -118,13 +118,13 @@ context.
 
 The hardest part was the gap between "works locally" and "works on the Runtime".
 Locally every test passed; deployed, the browser test failed with a permission
-error on Playwright's driver binary — the executable bit was lost because the
+error on Playwright's driver binary: the executable bit was lost because the
 deployment archive was built on Windows. The runtime logs pointed straight at
 it, and correcting the archive's file modes fixed it. That fix uncovered a
 sneakier second problem: with the tool finally reachable, the model kept calling
 it with an invalid session name (underscores are rejected) and retried in a
 loop. Adding explicit argument rules and a "fail twice, then tell the customer"
-instruction to the system prompt ended the loop — and both are now written down
+instruction to the system prompt ended the loop, and both are now written down
 where the next person will trip over them.
 
 For production I would extend this in three ways: validate tool inputs and
