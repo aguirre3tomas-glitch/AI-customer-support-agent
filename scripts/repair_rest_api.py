@@ -25,8 +25,12 @@ STAGE = "prod"
 REPO = Path(__file__).resolve().parents[1]
 CFG_PATH = REPO / "infra_config.json"
 CFG = json.loads(CFG_PATH.read_text(encoding="utf-8")) if CFG_PATH.exists() else {}
-API_ID = CFG.get("rest_api_id", "wah32tfea3")
-GW_ID = CFG.get("gateway_id", "customersupportgateway-4grevewyco")
+API_ID = CFG.get("rest_api_id")
+GW_ID = CFG.get("gateway_id")
+if not API_ID or not GW_ID:
+    raise SystemExit(
+        "infra_config.json has no rest_api_id / gateway_id — run setup_gateway_infra.py first"
+    )
 
 apigw = boto3.client("apigateway", region_name=REGION)
 ac = boto3.client("bedrock-agentcore-control", region_name=REGION)

@@ -31,6 +31,8 @@ Tres cosas que la reconstrucción destapó y quedaron arregladas en los scripts:
 
 ## Progreso Fase 1
 
+> Los IDs de esta sección son los del **primer** deployment, que el reset del lab borró. Los vigentes están en la tabla de **Reconstrucción completa** arriba.
+
 - [x] **Lambdas (2)** — `order-tracker` + `refund-processor` desplegadas (Python 3.12) y probadas: ORD-001 → `TRK987654321`/UPS; refund → `REF-…`/`APPROVED`. Rol de ejecución: `csai-lambda-basic-role` · Script: `scripts/deploy_lambdas.py`
 - [x] **REST API** — `customer-support-api` (id `wah32tfea3`), stage `prod`, 3 GET con operation names (`get_order`, `get_customer_orders`, `get_customer`) + integración proxy → `order-tracker` · Script: `scripts/setup_gateway_infra.py`
 - [x] **AgentCore Gateway** — `CustomerSupportGateway` (id `customersupportgateway-4grevewyco`) estado READY · authorizer NONE · rol `csai-gateway-role`
